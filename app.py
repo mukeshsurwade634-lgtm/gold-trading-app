@@ -5,14 +5,23 @@ import pandas as pd
 
 st.set_page_config(page_title="माझे ऑल-इन-वन ॲप", layout="wide")
 
+# --- टेलिग्राम ग्रुप अलर्ट (अचूक ग्रुप आयडीसह) ---
+TELEGRAM_TOKEN = "9037885219:AAEo4b4NQxu5eM7Ijwmnt1CuS7tPHFjCvRI"
+TELEGRAM_GROUP_ID = "-1002360408542"
+
+def send_group_alert(text_msg):
+    if TELEGRAM_TOKEN and TELEGRAM_GROUP_ID:
+        url = f"https://telegram.org{TELEGRAM_TOKEN}/sendMessage"
+        try:
+            requests.post(url, data={"chat_id": TELEGRAM_GROUP_ID, "text": text_msg})
+        except:
+            pass
+
 st.sidebar.title("🎛️ ॲप मेनू")
 
-# --- थेट टेलिग्राम लिंक बटण सिस्टीम ---
-st.sidebar.subheader("🧪 टेलिग्राम टेस्ट")
-# ही लिंक थेट तुमच्या मोबाईलमधील टेलिग्राम ॲप ओपन करून मेसेज पाठवेल
-tg_test_link = "https://telegram.org"
-st.sidebar.video(data=None) # स्पेससाठी
-st.sidebar.link_button("🚀 थेट टेलिग्राम टेस्ट करा", tg_test_link)
+if st.sidebar.button("🧪 ग्रुप अलर्ट टेस्ट करा"):
+    send_group_alert("👋 नमस्कार मुकेश! तुमच्या अल्गो ग्रुपमध्ये मेसेज सिस्टीम यशस्वीरित्या कनेक्ट झाली आहे! 🚀")
+    st.sidebar.success("ग्रुपमध्ये टेस्ट मेसेज पाठवला आहे!")
 
 choice = st.sidebar.selectbox("तुम्हाला काय वापरायचे आहे?", ["१. सोन्याचे पक्के बिल", "२. निफ्टी प्रगत ट्रेडिंग ट्रॅकर"])
 
@@ -70,12 +79,8 @@ elif choice == "२. निफ्टी प्रगत ट्रेडिंग
     def get_scalping_data():
         df = yf.download(tickers="^NSEI", period="2d", interval="5m")
         if df.empty: return pd.DataFrame()
-        
         if isinstance(df.columns, pd.MultiIndex):
-            df.columns = [col if isinstance(col, tuple) else col for col in df.columns]
-        else:
-            df.columns = [str(col) for col in df.columns]
-            
+            df.columns = [col for col in df.columns]
         df = df.dropna(subset=['Close'])
         
         new_df = pd.DataFrame(index=df.index)
@@ -113,16 +118,13 @@ elif choice == "२. निफ्टी प्रगत ट्रेडिंग
                 target_p = round(live_price - 15, 2)
                 sl_p = round(live_price + 10, 2)
                 st.error("🔴 **BUY PUT (PE) स्कॅल्पिंग संकेत!**")
-                # सिग्नल्स थेट लिंक स्वरूपात दाखवणे जेणेकरून एका क्लिकवर मेसेज जाईल
-                put_link = f"https://telegram.org_{live_price}"
-                st.link_button("📥 हा PUT सिग्नल टेलिग्रामवर पाठवा", put_link)
+                send_group_alert(f"🔴 NIFTY 50 PUT संकेत!\n• किंमत: ₹{live_price:.2f}\n• Target: ₹{target_p}\n• SL: ₹{sl_p}")
             
             elif (float(prev_candle['High']) < float(prev_candle['EMA_5'])) and (live_price > float(prev_candle['High'])) and (rsi_now >= 55):
                 target_p = round(live_price + 15, 2)
                 sl_p = round(live_price - 10, 2)
                 st.success("🟢 **BUY CALL (CE) स्कॅल्पिंग संकेत!**")
-                call_link = f"https://telegram.org_{live_price}"
-                st.link_button("📥 हा CALL सिग्नल टेलिग्रामवर पाठवा", call_link)
+                send_group_alert(f"🟢 NIFTY 50 CALL संकेत!\n• किंमत: ₹{live_price:.2f}\n• Target: ₹{target_p}\n• SL: ₹{sl_p}")
             else:
                 st.warning("⚪ **सध्या कोणतीही स्कॅल्पिंग संधी नाही (WAIT)**")
             st.subheader("📋 लाईव्ह ५ मिनिट डेटा टेबल")
