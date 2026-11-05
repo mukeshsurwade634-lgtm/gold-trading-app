@@ -46,42 +46,23 @@ if choice == "१. सोन्याचे पक्के बिल":
     with col1:
         weight = st.number_input("दागिन्याचे वजन (ग्रॅम):", min_value=0.1, value=10.0, step=0.1)
     with col2:
-            @st.cache_data(ttl=10)
-    def get_scalping_data():
-        df = yf.download(tickers="^NSEI", period="2d", interval="5m")
-        if df.empty: return pd.DataFrame()
-        
-        # yfinance चा नवीन Multi-index कॉलमचा प्रॉब्लेम फिक्स करणे
-        if isinstance(df.columns, pd.MultiIndex):
-            df.columns = [col[0] for col in df.columns]
-        else:
-            df.columns = [str(col) for col in df.columns]
-            
-        df = df.dropna(subset=['Close'])
-        
-        # डेटा मधील सिरीज साधी करणे
-        close_series = pd.Series(df['Close'].values.flatten(), index=df.index)
-        high_series = pd.Series(df['High'].values.flatten(), index=df.index)
-        low_series = pd.Series(df['Low'].values.flatten(), index=df.index)
-        open_series = pd.Series(df['Open'].values.flatten(), index=df.index)
-        
-        new_df = pd.DataFrame(index=df.index)
-        new_df['Open'] = open_series
-        new_df['High'] = high_series
-        new_df['Low'] = low_series
-        new_df['Close'] = close_series
-        
-        new_df['EMA_5'] = new_df['Close'].ewm(span=5, adjust=False).mean()
-        delta = new_df['Close'].diff()
-        gain = (delta.where(delta > 0, 0)).rolling(window=14).mean()
-        loss = (-delta.where(delta < 0, 0)).rolling(window=14).mean()
-        rs = gain / loss
-        new_df['RSI_14'] = 100 - (100 / (1 + rs))
-        return new_df
+        making = st.number_input("घडणावळ (टक्केवारी %):", min_value=0.0, value=12.0, step=0.5)
+    if st.button("पक्के बिल जनरेट करा"):
+        pure_cost = final_22k * weight
+        making_cost = pure_cost * (making / 100)
+        sub_total = pure_cost + making_cost
+        gst = sub_total * 0.03
+        total = sub_total + gst
+        st.success(f"### 🧾 सराफा पक्के बिल (२२K)")
+        st.write(f"• सोन्याची मूळ किंमत: **₹{pure_cost:.2f}**")
+        st.write(f"• घडणावळ ({making}%): **₹{making_cost:.2f}**")
+        st.write(f"• एकूण उप-किंमत: **₹{sub_total:.2f}**")
+        st.write(f"• सरकारी कर (३% GST): **₹{gst:.2f}**")
+        st.markdown(f"## 🛍️ अंतिम रक्कम: **₹{total:.2f}**")
 
 elif choice == "२. निफ्टी प्रगत ट्रेडिंग ट्रॅकर":
     st.title("⚡ निफ्टी ५० प्रगत ५ EMA स्कॅल्पिंग ट्रॅकर")
-    st.write("हा ट्रॅकर ५ मिनिटांच्या चार्टवर वेगाने स्कॅल्पिंग सिग्नल्स शोधतो.")
+    st.write("หา ट्रॅकर ५ मिनिटांच्या चार्टवर वेगाने स्कॅल्पिंग सिग्नल्स शोधतो.")
     if st.button("🔄 लाईव्ह डेटा रीफ्रेश करा"):
         st.cache_data.clear()
         st.rerun()
@@ -90,16 +71,30 @@ elif choice == "२. निफ्टी प्रगत ट्रेडिंग
     def get_scalping_data():
         df = yf.download(tickers="^NSEI", period="2d", interval="5m")
         if df.empty: return pd.DataFrame()
+        
+        # yfinance चा नवीन Multi-index कॉलमचा प्रॉब्लेम फिक्स करणे
         if isinstance(df.columns, pd.MultiIndex):
-            df.columns = [col for col in df.columns]
+            df.columns = [col[0] if isinstance(col, tuple) else col for col in df.columns]
+        else:
+            df.columns = [str(col) for col in df.columns]
+            
         df = df.dropna(subset=['Close'])
-        df['EMA_5'] = df['Close'].ewm(span=5, adjust=False).mean()
-        delta = df['Close'].diff()
+        
+        # डेटा साध्या सिरीजमध्ये कन्व्हर्ट करणे
+        new_df = pd.DataFrame(index=df.index)
+        new_df['Open'] = pd.Series(df['Open'].values.flatten(), index=df.index)
+        new_df['High'] = pd.Series(df['High'].values.flatten(), index=df.index)
+        new_df['Low'] = pd.Series(df['Low'].values.flatten(), index=df.index)
+        new_df['Close'] = pd.Series(df['Close'].values.flatten(), index=df.index)
+        
+        # इंडिकेटर्स कॅल्क्युलेशन
+        new_df['EMA_5'] = new_df['Close'].ewm(span=5, adjust=False).mean()
+        delta = new_df['Close'].diff()
         gain = (delta.where(delta > 0, 0)).rolling(window=14).mean()
         loss = (-delta.where(delta < 0, 0)).rolling(window=14).mean()
         rs = gain / loss
-        df['RSI_14'] = 100 - (100 / (1 + rs))
-        return df
+        new_df['RSI_14'] = 100 - (100 / (1 + rs))
+        return new_df
 
     try:
         data = get_scalping_data()
@@ -117,8 +112,8 @@ elif choice == "२. निफ्टी प्रगत ट्रेडिंग
             
             st.markdown("---")
             st.subheader("🎯 स्कॅल्पिंग ॲक्शन संकेत")
-            candle_time = str(data.index[-1])
             
+            # PUT स्कॅल्पिंग लॉजिक
             if (float(prev_candle['Low']) > float(prev_candle['EMA_5'])) and (live_price < float(prev_candle['Low'])) and (rsi_now <= 45):
                 target_p = round(live_price - 15, 2)
                 sl_p = round(live_price + 10, 2)
@@ -128,6 +123,7 @@ elif choice == "२. निफ्टी प्रगत ट्रेडिंग
                     requests.post(url, json={"chat_id": "5144404922", "text": f"🔴 *NIFTY 50 PUT (PE) संकेत!*\n• किंमत: ₹{live_price:.2f}\n• Target: ₹{target_p}\n• SL: ₹{sl_p}"})
                 except: pass
             
+            # CALL स्कॅल्पिंग लॉजिक
             elif (float(prev_candle['High']) < float(prev_candle['EMA_5'])) and (live_price > float(prev_candle['High'])) and (rsi_now >= 55):
                 target_p = round(live_price + 15, 2)
                 sl_p = round(live_price - 10, 2)
@@ -138,8 +134,9 @@ elif choice == "२. निफ्टी प्रगत ट्रेडिंग
                 except: pass
             else:
                 st.warning("⚪ **सध्या कोणतीही स्कॅल्पिंग संधी नाही (WAIT)**")
+                
             st.subheader("📋 लाईव्ह ५ मिनिट डेटा टेबल")
             st.dataframe(data[['Open', 'High', 'Low', 'Close', 'EMA_5', 'RSI_14']].tail(5))
     except Exception as e:
         st.error(f"अडचण आली: {e}")
-        
+    
