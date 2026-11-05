@@ -5,7 +5,7 @@ import pandas as pd
 
 st.set_page_config(page_title="माझे ऑल-इन-वन ॲप", layout="wide")
 
-st.sidebar.title("🎛️ ॲप मेनू")
+# --- अचूक टेलिग्राम कॉन्फिगरेशन ---
 TELEGRAM_TOKEN = "9037885219:AAEo4b4NQxu5eM7Ijwmnt1CuS7tPHFjCvRI"
 TELEGRAM_CHAT_ID = "5144404922"
 
@@ -18,15 +18,13 @@ def send_telegram_message(message):
         except Exception as e:
             pass
 
-# टेस्ट बटण
+st.sidebar.title("🎛️ ॲपメニュー")
+
+# टेस्ट बटण - हे दाबल्यावर थेट मोबाईलवर मेसेज येईल
 if st.sidebar.button("🧪 टेलिग्राम टेस्ट करा"):
-    send_telegram_message("👋 नमस्कार मुकेश! तुमच्या ॲपमधून टेलिग्राम अलर्ट आता यशस्वीरित्या सुरू झाला आहे! 🚀")
+    send_telegram_message("👋 नमस्कार मुकेश! तुमच्या ॲपमधून ५ EMA स्कॅल्पिंग अलर्ट आता यशस्वीरित्या सुरू झाला आहे! 🚀")
     st.sidebar.success("टेस्ट मेसेज पाठवला आहे! टेलिग्राम चेक करा.")
 
-st.sidebar.markdown("---")
-
-    
-st.sidebar.title("🎛️ ॲप मेनू")
 choice = st.sidebar.selectbox("तुम्हाला काय वापरायचे आहे?", ["१. सोन्याचे पक्के बिल", "२. निफ्टी प्रगत ट्रेडिंग ट्रॅकर"])
 
 def get_live_market_data():
@@ -77,9 +75,9 @@ if choice == "१. सोन्याचे पक्के बिल":
         st.write(f"• सरकारी कर (३% GST): **₹{gst:.2f}**")
         st.markdown(f"## 🛍️ अंतिम रक्कम: **₹{total:.2f}**")
 
-# ----------------- भाग २: ५ EMA प्रो स्कॅल्पिंग ट्रॅकर + टेलिग्राम -----------------
+# ----------------- भाग २: ५ EMA प्रो स्कॅल्पिंग ट्रॅकर -----------------
 elif choice == "२. निफ्टी प्रगत ट्रेडिंग ट्रॅकर":
-    st.title("⚡ निफ्टी ५० प्रगत ५ EMA स्कॅल्पिंग ट्रॅकर (Telegram Alert)")
+    st.title("⚡ निफ्टी ५० प्रगत ५ EMA स्कॅल्पिंग ट्रॅकर")
     st.write("हा ट्रॅकर ५ मिनिटांच्या चार्टवर वेगाने स्कॅल्पिंग सिग्नल्स शोधतो आणि थेट टेलिग्रामवर पाठवतो.")
     
     if st.button("🔄 लाईव्ह डेटा रीफ्रेश करा"):
@@ -116,7 +114,6 @@ elif choice == "२. निफ्टी प्रगत ट्रेडिंग
             rsi_now = float(last_candle['RSI_14'])
             ema5_now = float(last_candle['EMA_5'])
             
-            # डॅशबोर्डवर किंमती
             col1, col2, col3 = st.columns(3)
             col1.metric(label="निफ्टी लाईव्ह किंमत", value=f"₹{live_price:.2f}")
             col2.metric(label="RSI (14)", value=f"{rsi_now:.2f}")
@@ -125,7 +122,6 @@ elif choice == "२. निफ्टी प्रगत ट्रेडिंग
             st.markdown("---")
             st.subheader("🎯 स्कॅल्पिंग ॲक्शन संकेत")
             
-            # ड्युप्लिकेट मेसेज टाळण्यासाठी कॅंडलची वेळ ट्रॅक करणे
             candle_time = str(data.index[-1])
             
             # PUT स्कॅल्पिंग संकेत
@@ -134,7 +130,6 @@ elif choice == "२. निफ्टी प्रगत ट्रेडिंग
                 sl_p = round(live_price + 10, 2)
                 st.error("🔴 **BUY PUT (PE) स्कॅल्पिंग संकेत!**")
                 
-                # टेलिग्राम मेसेज तयार करणे
                 tg_msg = f"🔴 *NIFTY 50 स्कॅल्पिंग PUT (PE) संकेत!*\n\n• किंमत: ₹{live_price:.2f}\n• Target: ₹{target_p}\n• Stop Loss: ₹{sl_p}\n• वेळ: {candle_time}"
                 send_telegram_message(tg_msg)
                 st.info(f"📝 **टेलिग्राम मेसेज पाठवला गेला आहे!**")
@@ -145,7 +140,6 @@ elif choice == "२. निफ्टी प्रगत ट्रेडिंग
                 sl_p = round(live_price - 10, 2)
                 st.success("🟢 **BUY CALL (CE) स्कॅल्पिंग संकेत!**")
                 
-                # टेलिग्राम मेसेज तयार करणे
                 tg_msg = f"🟢 *NIFTY 50 स्कॅल्पिंग CALL (CE) संकेत!*\n\n• किंमत: ₹{live_price:.2f}\n• Target: ₹{target_p}\n• Stop Loss: ₹{sl_p}\n• वेळ: {candle_time}"
                 send_telegram_message(tg_msg)
                 st.info(f"📝 **टेलिग्राम मेसेज पाठवला गेला आहे!**")
