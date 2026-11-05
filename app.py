@@ -14,7 +14,18 @@ TELEGRAM_TOKEN = part1 + part2
 
 
 # डेटा गोळा करण्यासाठी ग्रुप आयडी शोधण्याचे फंक्शन
+# टेलिग्राम चॅनेलवर थेट मेसेज पाठवणारे अंतिम अचूक फंक्शन
 def send_telegram_alert(message):
+    try:
+        # तुमच्या स्क्रीनशॉटमधील तंतोतंत अचूक पत्ता (लहान-मोठ्या अक्षरांसह)
+        channel_id = "@Scalping_Mukesh" 
+        
+        send_url = f"https://telegram.org{TELEGRAM_TOKEN}/sendMessage"
+        payload = {"chat_id": channel_id, "text": message, "parse_mode": "Markdown"}
+        requests.post(send_url, json=payload)
+    except:
+        pass
+
     try:
         # सुरवातीला बॉटचे चॅट्स तपासून चॅनेलचा अचूक आयडी शोधणे
         updates_url = f"https://telegram.org{TELEGRAM_TOKEN}/getUpdates"
