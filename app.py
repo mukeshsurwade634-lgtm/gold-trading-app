@@ -5,14 +5,18 @@ import pandas as pd
 
 st.set_page_config(page_title="माझे ऑल-इन-वन ॲप", layout="wide")
 
-# --- टेलिग्राम थेट मेसेज पाठवणारी सिस्टीम ---
+# --- टेलिग्राम थेट मेसेज पाठवणारी सिस्टीम (अचूक टोकनसह) ---
 if st.sidebar.button("🧪 टेलिग्राम टेस्ट करा"):
     try:
+        # इथे आपण शेवटी कॅपिटल I (आय) असलेला अचूक टोकन अपडेट केला आहे
         url = "https://telegram.org"
-        requests.post(url, json={"chat_id": "5144404922", "text": "👋 नमस्कार मुकेश! तुमच्या ॲपमधून टेलिग्राम अलर्ट आता यशस्वीरित्या सुरू झाला आहे! 🚀"})
-        st.sidebar.success("टेस्ट मेसेज पाठवला आहे! टेलिग्राम चेक करा.")
-    except:
-        st.sidebar.error("कनेक्शन फेल झाले.")
+        res = requests.post(url, json={"chat_id": "5144404922", "text": "👋 नमस्कार मुकेश! तुमच्या ॲपमधून ५ EMA स्कॅल्पिंग अलर्ट आता यशस्वीरित्या सुरू झाला आहे! 🚀"})
+        if res.json().get("ok"):
+            st.sidebar.success("टेस्ट मेसेज पाठवला आहे! टेलिग्राम चेक करा.")
+        else:
+            st.sidebar.error("टेलिग्राम एरर: " + str(res.json().get("description")))
+    except Exception as e:
+        st.sidebar.error(f"कनेक्शन फेल: {e}")
 
 st.sidebar.title("🎛️ ॲप मेनू")
 choice = st.sidebar.selectbox("तुम्हाला काय वापरायचे आहे?", ["१. सोन्याचे पक्के बिल", "२. निफ्टी प्रगत ट्रेडिंग ट्रॅकर"])
@@ -54,7 +58,7 @@ if choice == "१. सोन्याचे पक्के बिल":
         gst = sub_total * 0.03
         total = sub_total + gst
         st.success(f"### 🧾 सराफा पक्के बिल (२२K)")
-        st.write(f"• सोन्याची मूळ किंमत: **₹{pure_cost:.2f}**")
+        st.write(f"• सोन्याची मूळ傾मत: **₹{pure_cost:.2f}**")
         st.write(f"• घडणावळ ({making}%): **₹{making_cost:.2f}**")
         st.write(f"• एकूण उप-किंमत: **₹{sub_total:.2f}**")
         st.write(f"• सरकारी कर (३% GST): **₹{gst:.2f}**")
@@ -62,7 +66,7 @@ if choice == "१. सोन्याचे पक्के बिल":
 
 elif choice == "२. निफ्टी प्रगत ट्रेडिंग ट्रॅकर":
     st.title("⚡ निफ्टी ५० प्रगत ५ EMA स्कॅल्पिंग ट्रॅकर")
-    st.write("หา ट्रॅकर ५ मिनिटांच्या चार्टवर वेगाने स्कॅल्पिंग सिग्नल्स शोधतो.")
+    st.write("हा ट्रॅकर ५ मिनिटांच्या चार्टवर वेगाने स्कॅल्पिंग सिग्नल्स शोधतो.")
     if st.button("🔄 लाईव्ह डेटा रीफ्रेश करा"):
         st.cache_data.clear()
         st.rerun()
@@ -72,22 +76,19 @@ elif choice == "२. निफ्टी प्रगत ट्रेडिंग
         df = yf.download(tickers="^NSEI", period="2d", interval="5m")
         if df.empty: return pd.DataFrame()
         
-        # yfinance चा नवीन Multi-index कॉलमचा प्रॉब्लेम फिक्स करणे
         if isinstance(df.columns, pd.MultiIndex):
-            df.columns = [col[0] if isinstance(col, tuple) else col for col in df.columns]
+            df.columns = [col if isinstance(col, tuple) else col for col in df.columns]
         else:
             df.columns = [str(col) for col in df.columns]
             
         df = df.dropna(subset=['Close'])
         
-        # डेटा साध्या सिरीजमध्ये कन्व्हर्ट करणे
         new_df = pd.DataFrame(index=df.index)
         new_df['Open'] = pd.Series(df['Open'].values.flatten(), index=df.index)
         new_df['High'] = pd.Series(df['High'].values.flatten(), index=df.index)
         new_df['Low'] = pd.Series(df['Low'].values.flatten(), index=df.index)
         new_df['Close'] = pd.Series(df['Close'].values.flatten(), index=df.index)
         
-        # इंडिकेटर्स कॅल्क्युलेशन
         new_df['EMA_5'] = new_df['Close'].ewm(span=5, adjust=False).mean()
         delta = new_df['Close'].diff()
         gain = (delta.where(delta > 0, 0)).rolling(window=14).mean()
@@ -113,7 +114,6 @@ elif choice == "२. निफ्टी प्रगत ट्रेडिंग
             st.markdown("---")
             st.subheader("🎯 स्कॅल्पिंग ॲक्शन संकेत")
             
-            # PUT स्कॅल्पिंग लॉजिक
             if (float(prev_candle['Low']) > float(prev_candle['EMA_5'])) and (live_price < float(prev_candle['Low'])) and (rsi_now <= 45):
                 target_p = round(live_price - 15, 2)
                 sl_p = round(live_price + 10, 2)
@@ -123,7 +123,6 @@ elif choice == "२. निफ्टी प्रगत ट्रेडिंग
                     requests.post(url, json={"chat_id": "5144404922", "text": f"🔴 *NIFTY 50 PUT (PE) संकेत!*\n• किंमत: ₹{live_price:.2f}\n• Target: ₹{target_p}\n• SL: ₹{sl_p}"})
                 except: pass
             
-            # CALL स्कॅल्पिंग लॉजिक
             elif (float(prev_candle['High']) < float(prev_candle['EMA_5'])) and (live_price > float(prev_candle['High'])) and (rsi_now >= 55):
                 target_p = round(live_price + 15, 2)
                 sl_p = round(live_price - 10, 2)
@@ -134,9 +133,8 @@ elif choice == "२. निफ्टी प्रगत ट्रेडिंग
                 except: pass
             else:
                 st.warning("⚪ **सध्या कोणतीही स्कॅल्पिंग संधी नाही (WAIT)**")
-                
             st.subheader("📋 लाईव्ह ५ मिनिट डेटा टेबल")
             st.dataframe(data[['Open', 'High', 'Low', 'Close', 'EMA_5', 'RSI_14']].tail(5))
     except Exception as e:
         st.error(f"अडचण आली: {e}")
-    
+                
