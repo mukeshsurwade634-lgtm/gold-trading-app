@@ -12,7 +12,7 @@ TELEGRAM_CHAT_ID = "5144404922"
 def send_telegram_message(message):
     if TELEGRAM_TOKEN and TELEGRAM_CHAT_ID:
         # इथे आपण 'api.telegram.org' असा अचूक पत्ता सुधारला आहे
-        url = f"https://telegram.org{TELEGRAM_TOKEN}/sendMessage"
+        url = f"https://api.telegram.org{TELEGRAM_TOKEN}/sendMessage"
         payload = {"chat_id": TELEGRAM_CHAT_ID, "text": message, "parse_mode": "Markdown"}
         try:
             requests.post(url, json=payload)
