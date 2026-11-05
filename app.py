@@ -5,20 +5,15 @@ import pandas as pd
 
 st.set_page_config(page_title="माझे ऑल-इन-वन ॲप", layout="wide")
 
-# --- सुधारित थेट मेसेज सिस्टीम (सुरक्षित युआरएल पॅरामीटर्ससह) ---
-if st.sidebar.button("🧪 टेलिग्राम टेस्ट करा"):
-    try:
-        # एरर टाळण्यासाठी आपण थेट डेटा सेंड करण्याचे लॉजिक बदलले आहे
-        clean_url = "https://telegram.org"
-        res = requests.get(clean_url)
-        if res.status_code == 200:
-            st.sidebar.success("टेस्ट मेसेज पाठवला आहे! टेलिग्राम चेक करा.")
-        else:
-            st.sidebar.error(f"फेल झाले: स्टेटस कोड {res.status_code}")
-    except Exception as e:
-        st.sidebar.error(f"कनेक्शन फेल: {e}")
-
 st.sidebar.title("🎛️ ॲप मेनू")
+
+# --- थेट टेलिग्राम लिंक बटण सिस्टीम ---
+st.sidebar.subheader("🧪 टेलिग्राम टेस्ट")
+# ही लिंक थेट तुमच्या मोबाईलमधील टेलिग्राम ॲप ओपन करून मेसेज पाठवेल
+tg_test_link = "https://telegram.org"
+st.sidebar.video(data=None) # स्पेससाठी
+st.sidebar.link_button("🚀 थेट टेलिग्राम टेस्ट करा", tg_test_link)
+
 choice = st.sidebar.selectbox("तुम्हाला काय वापरायचे आहे?", ["१. सोन्याचे पक्के बिल", "२. निफ्टी प्रगत ट्रेडिंग ट्रॅकर"])
 
 def get_live_market_data():
@@ -118,19 +113,16 @@ elif choice == "२. निफ्टी प्रगत ट्रेडिंग
                 target_p = round(live_price - 15, 2)
                 sl_p = round(live_price + 10, 2)
                 st.error("🔴 **BUY PUT (PE) स्कॅल्पिंग संकेत!**")
-                try:
-                    tg_url = f"https://telegram.org_{live_price}"
-                    requests.get(tg_url)
-                except: pass
+                # सिग्नल्स थेट लिंक स्वरूपात दाखवणे जेणेकरून एका क्लिकवर मेसेज जाईल
+                put_link = f"https://telegram.org_{live_price}"
+                st.link_button("📥 हा PUT सिग्नल टेलिग्रामवर पाठवा", put_link)
             
             elif (float(prev_candle['High']) < float(prev_candle['EMA_5'])) and (live_price > float(prev_candle['High'])) and (rsi_now >= 55):
                 target_p = round(live_price + 15, 2)
                 sl_p = round(live_price - 10, 2)
                 st.success("🟢 **BUY CALL (CE) स्कॅल्पिंग संकेत!**")
-                try:
-                    tg_url = f"https://telegram.org_{live_price}"
-                    requests.get(tg_url)
-                except: pass
+                call_link = f"https://telegram.org_{live_price}"
+                st.link_button("📥 हा CALL सिग्नल टेलिग्रामवर पाठवा", call_link)
             else:
                 st.warning("⚪ **सध्या कोणतीही स्कॅल्पिंग संधी नाही (WAIT)**")
             st.subheader("📋 लाईव्ह ५ मिनिट डेटा टेबल")
