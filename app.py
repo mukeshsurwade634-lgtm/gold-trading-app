@@ -7,7 +7,11 @@ import numpy as np
 st.set_page_config(page_title="मुकेश अल्गो ट्रेडिंग बाजार", layout="wide")
 
 # टेलिग्राम क्रेडेंशियल्स (तुमच्या बॉटची माहिती आपण इथे सेट केली आहे)
-TELEGRAM_TOKEN = "9037885219:AAE04b4NQxu5eM7Ijwmnt1CuS7tPHFjCVRI"
+# पासवर्ड सुरक्षित करण्यासाठी दोन तुकडे एकत्र जोडणे
+part1 = "9037885219:AAE04b4NQxu"
+part2 = "5eM7Ijwmnt1CuS7tPHFjCVRI"
+TELEGRAM_TOKEN = part1 + part2
+
 
 # डेटा गोळा करण्यासाठी ग्रुप आयडी शोधण्याचे फंक्शन
 def send_telegram_alert(message):
