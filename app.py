@@ -46,19 +46,38 @@ if choice == "१. सोन्याचे पक्के बिल":
     with col1:
         weight = st.number_input("दागिन्याचे वजन (ग्रॅम):", min_value=0.1, value=10.0, step=0.1)
     with col2:
-        making = st.number_input("घडणावळ (टक्केवारी %):", min_value=0.0, value=12.0, step=0.5)
-    if st.button("पक्के बिल जनरेट करा"):
-        pure_cost = final_22k * weight
-        making_cost = pure_cost * (making / 100)
-        sub_total = pure_cost + making_cost
-        gst = sub_total * 0.03
-        total = sub_total + gst
-        st.success(f"### 🧾 सराफा पक्के बिल (२२K)")
-        st.write(f"• सोन्याची मूळ किंमत: **₹{pure_cost:.2f}**")
-        st.write(f"• घडणावळ ({making}%): **₹{making_cost:.2f}**")
-        st.write(f"• एकूण उप-किंमत: **₹{sub_total:.2f}**")
-        st.write(f"• सरकारी कर (३% GST): **₹{gst:.2f}**")
-        st.markdown(f"## 🛍️ अंतिम रक्कम: **₹{total:.2f}**")
+            @st.cache_data(ttl=10)
+    def get_scalping_data():
+        df = yf.download(tickers="^NSEI", period="2d", interval="5m")
+        if df.empty: return pd.DataFrame()
+        
+        # yfinance चा नवीन Multi-index कॉलमचा प्रॉब्लेम फिक्स करणे
+        if isinstance(df.columns, pd.MultiIndex):
+            df.columns = [col[0] for col in df.columns]
+        else:
+            df.columns = [str(col) for col in df.columns]
+            
+        df = df.dropna(subset=['Close'])
+        
+        # डेटा मधील सिरीज साधी करणे
+        close_series = pd.Series(df['Close'].values.flatten(), index=df.index)
+        high_series = pd.Series(df['High'].values.flatten(), index=df.index)
+        low_series = pd.Series(df['Low'].values.flatten(), index=df.index)
+        open_series = pd.Series(df['Open'].values.flatten(), index=df.index)
+        
+        new_df = pd.DataFrame(index=df.index)
+        new_df['Open'] = open_series
+        new_df['High'] = high_series
+        new_df['Low'] = low_series
+        new_df['Close'] = close_series
+        
+        new_df['EMA_5'] = new_df['Close'].ewm(span=5, adjust=False).mean()
+        delta = new_df['Close'].diff()
+        gain = (delta.where(delta > 0, 0)).rolling(window=14).mean()
+        loss = (-delta.where(delta < 0, 0)).rolling(window=14).mean()
+        rs = gain / loss
+        new_df['RSI_14'] = 100 - (100 / (1 + rs))
+        return new_df
 
 elif choice == "२. निफ्टी प्रगत ट्रेडिंग ट्रॅकर":
     st.title("⚡ निफ्टी ५० प्रगत ५ EMA स्कॅल्पिंग ट्रॅकर")
