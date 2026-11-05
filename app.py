@@ -5,13 +5,12 @@ import pandas as pd
 
 st.set_page_config(page_title="माझे ऑल-इन-वन ॲप", layout="wide")
 
-# --- टेलिग्राम कॉन्फिगरेशन (इथे तुमचे आयडी टाका) ---
- TELEGRAM_TOKEN = "9037885219:AAEo4b4NQxu5eM7Ijwmnt1CuS7tPHFjCvRI"
+st.sidebar.title("🎛️ ॲप मेनू")
+TELEGRAM_TOKEN = "9037885219:AAEo4b4NQxu5eM7Ijwmnt1CuS7tPHFjCvRI"
 TELEGRAM_CHAT_ID = "5144404922"
 
 def send_telegram_message(message):
     if TELEGRAM_TOKEN and TELEGRAM_CHAT_ID:
-        # इथे आपण अचूक पत्ता /bot आणि टोकन नीट जोडले आहे
         url = f"https://telegram.org{TELEGRAM_TOKEN}/sendMessage"
         payload = {"chat_id": TELEGRAM_CHAT_ID, "text": message, "parse_mode": "Markdown"}
         try:
@@ -19,10 +18,13 @@ def send_telegram_message(message):
         except Exception as e:
             pass
 
-# टेस्ट बटण (तुमचा टेलिग्राम बॉट चालू आहे की नाही हे तपासण्यासाठी)
+# टेस्ट बटण
 if st.sidebar.button("🧪 टेलिग्राम टेस्ट करा"):
     send_telegram_message("👋 नमस्कार मुकेश! तुमच्या ॲपमधून टेलिग्राम अलर्ट आता यशस्वीरित्या सुरू झाला आहे! 🚀")
     st.sidebar.success("टेस्ट मेसेज पाठवला आहे! टेलिग्राम चेक करा.")
+
+st.sidebar.markdown("---")
+
     
 st.sidebar.title("🎛️ ॲप मेनू")
 choice = st.sidebar.selectbox("तुम्हाला काय वापरायचे आहे?", ["१. सोन्याचे पक्के बिल", "२. निफ्टी प्रगत ट्रेडिंग ट्रॅकर"])
