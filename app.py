@@ -6,13 +6,13 @@ import pandas as pd
 st.set_page_config(page_title="माझे ऑल-इन-वन ॲप", layout="wide")
 
 # --- टेलिग्राम कॉन्फिगरेशन (इथे तुमचे आयडी टाका) ---
-TELEGRAM_TOKEN = "9037885219:AAEo4b4NQxu5eM7Ijwmnt1CuS7tPHFjCvRI"
+ TELEGRAM_TOKEN = "9037885219:AAEo4b4NQxu5eM7Ijwmnt1CuS7tPHFjCvRI"
 TELEGRAM_CHAT_ID = "5144404922"
 
 def send_telegram_message(message):
     if TELEGRAM_TOKEN and TELEGRAM_CHAT_ID:
-        # इथे आपण 'api.telegram.org' असा अचूक पत्ता सुधारला आहे
-        url = f"https://api.telegram.org{TELEGRAM_TOKEN}/sendMessage"
+        # इथे आपण अचूक पत्ता /bot आणि टोकन नीट जोडले आहे
+        url = f"https://telegram.org{TELEGRAM_TOKEN}/sendMessage"
         payload = {"chat_id": TELEGRAM_CHAT_ID, "text": message, "parse_mode": "Markdown"}
         try:
             requests.post(url, json=payload)
