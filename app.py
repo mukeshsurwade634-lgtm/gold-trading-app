@@ -94,20 +94,28 @@ elif choice == "२. निफ्टी लाईव्ह इंडिकेट
 # टेलिग्राम लाईव्ह अलर्ट बटण (कोडच्या शेवटी टाका)
 # ==========================================
 import requests
-import requests
 
-# १. टोकन सुरक्षितपणे तुकड्यांमध्ये जोडणे (गिटहब सिक्युरिटी ब्लॉक करणार नाही)
-part1 = "9014683307"
-part2 = "AAG7AYDLKJ7aU9hz-MFA3qZXH5z4OTGToTE"
-NEW_TOKEN = f"{part1}:{part2}"
-
+# थेट पूर्ण लिंक (तुकडे न करता, कोणतीही स्पेस न सोडता सलग)
+telegram_api_url = "https://telegram.org"
 MY_CHAT_ID = "5144404922"
-
-# २. अचूक API URL
-telegram_api_url = f"https://telegram.org{NEW_TOKEN}/sendMessage"
 
 st.markdown("---")
 st.subheader("🔔 सिस्टीम अलर्ट टेस्ट")
+
+if st.button("🔴 लाइव्ह अलर्ट टेस्ट करा"):
+    params = {
+        "chat_id": MY_CHAT_ID,
+        "text": "🚀 भाऊ, अखेर आपला टेलिग्राम मेसेज १००% चालू झाला! 🔥"
+    }
+    
+    try:
+        res = requests.post(telegram_api_url, json=params)
+        if res.status_code == 200:
+            st.success("✅ मेसेज पाठवला आहे! मोबाईल चेक करा भाऊ.")
+        else:
+            st.error(f"❌ बोट एरर: {res.text}")
+    except Exception as e:
+        st.error(f"❌ कनेक्शन एरर: {e}")
 
 if st.button("🔴 लाइव्ह अलर्ट टेस्ट करा"):
     params = {
