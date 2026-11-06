@@ -96,7 +96,7 @@ elif choice == "२. निफ्टी लाईव्ह इंडिकेट
 import requests
 
 # १. तुझा बोट टोकन आणि तुझा अचूक आयडी
-NEW_TOKEN = "9037885219:AAEO4b4NQXu5eM7Ijwmnt1CuS7tPHFjCvRI"
+NEW_TOKEN = "9037885219:AAGvcbWKBP9c_cQtSuoYNYNxZnLXJAwJqh8"
 MY_CHAT_ID = "5144404922"  # इथे तुझा ९ अंकी नंबर टाक भाऊ
 
 telegram_api_url = f"https://api.telegram.org/bot{NEW_TOKEN}/sendMessage"
