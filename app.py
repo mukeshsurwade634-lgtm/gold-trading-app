@@ -1,55 +1,84 @@
 import streamlit as st
 import requests
+import yfinance as yf
+import pandas as pd
+import numpy as np
 
 st.set_page_config(page_title="मुकेश अल्गो ट्रेडिंग बाजार", layout="wide")
 
-# १. सोन्याचा आणि डॉलरचा चालू दर काढणारे तुमचे पक्के जुने इंजिन
-def get_bhusawal_live_gold():
-    try:
-        usd_res = requests.get("https://er-api.com", timeout=5).json()
-        inr_rate = usd_res["rates"]["INR"]
-        gold_res = requests.get("https://er-api.com", timeout=5).json()
-        if "rates" in gold_res and "USD" in gold_res["rates"]:
-            gold_spot_usd = 1 / gold_res["rates"]["USD"]
-        else:
-            gold_spot_usd = 2745.50
-        return gold_spot_usd, inr_rate
-    except:
-        return 2745.50, 84.35 
+# टेलिग्राम क्रेडेंशियल्स (तुमच्या बॉटची माहिती आपण इथे सेट केली आहे)
+TELEGRAM_TOKEN = "9037885219:AAE04b4NQxu5eM7Ijwmnt1CuS7tPHFjCVRI"
 
-# २. निफ्टी ५० चा चालू भाव इंटरनेटवरून थेट मिळवणारे फंक्शन
-def get_live_nifty_direct():
+# डेटा गोळा करण्यासाठी ग्रुप आयडी शोधण्याचे फंक्शन
+def send_telegram_alert(message):
     try:
-        nifty_url = "https://yahoo.com^NSEI?interval=1m&range=1d"
-        headers = {'User-Agent': 'Mozilla/5.0'}
-        res = requests.get(nifty_url, headers=headers, timeout=5).json()
-        meta = res['chart']['result']['meta']
-        live_price = meta['regularMarketPrice']
-        return live_price
+        # सुरवातीला बॉटचे चॅट्स तपासून चॅनेलचा अचूक आयडी शोधणे
+        updates_url = f"https://telegram.org{TELEGRAM_TOKEN}/getUpdates"
+        res = requests.get(updates_url).json()
+        chat_id = None
+        if "result" in res:
+            for update in res["result"]:
+                if "my_chat_member" in update and "chat" in update["my_chat_member"]:
+                    chat_id = update["my_chat_member"]["chat"]["id"]
+                    break
+                if "channel_post" in update and "chat" in update["channel_post"]:
+                    chat_id = update["channel_post"]["chat"]["id"]
+                    break
+                if "message" in update and "chat" in update["message"]:
+                    chat_id = update["message"]["chat"]["id"]
+                    break
+        
+        # जर आयडी मिळाला नाही, तर तात्पुरता चॅनेल डेटा वापरणे
+        if not chat_id:
+            chat_id = "@Scalping_Mukesh" # तुमच्या चॅनेलच्या नावावरून शोधण्याचा प्रयत्न
+            
+        send_url = f"https://telegram.org{TELEGRAM_TOKEN}/sendMessage"
+        payload = {"chat_id": chat_id, "text": message, "parse_mode": "Markdown"}
+        requests.post(send_url, json=payload)
     except:
-        return 24050.30
+        pass
 
-# ॲप डावा मेनू
+# सोन्याचा चालू भाव काढणारे फंक्शन
+def get_live_gold_data():
+    try:
+        usd_url = "https://er-api.com"
+        usd_data = requests.get(usd_url).json()
+        live_usd = usd_data["rates"]["INR"]
+        gold_in_usd = 3904.50
+        try:
+            gold_url = "https://er-api.com"
+            gold_data = requests.get(gold_url).json()
+            if "rates" in gold_data and "USD" in gold_data["rates"]:
+                gold_spot_usd = 1 / gold_data["rates"]["USD"]
+                if gold_spot_usd > 1000:
+                    gold_in_usd = gold_spot_usd
+        except:
+            pass
+        return gold_in_usd, live_usd
+    except:
+        return 3904.50, 95.07
+
+# ॲप मेनू
 st.sidebar.title("🎛️ मुकेश अल्गो कंट्रोल")
-choice = st.sidebar.selectbox("पर्याय निवडा:", ["१. सोन्याचे पक्के बिल", "२. निफ्टी लाईव्ह इंडिकेटर्स स्क्रीन"])
+choice = st.sidebar.selectbox("पर्याय निवडा:", ["१. सोन्याचे पक्के बिल", "२. मुकेश लाईव्ह अल्गो ट्रॅकर"])
 
-# ----------------- भाग १: सोन्याचे कॅल्क्युलेटर (पूर्ण सुरक्षित) -----------------
+# ----------------- भाग १: सोन्याचे कॅल्क्युलेटर -----------------
 if choice == "१. सोन्याचे पक्के बिल":
-    st.title("💰 मुकेश भुसावळ लाईव्ह सराफा कॅल्क्युलेटर")
-    st.write("हे ॲप आंतरराष्ट्रीय स्पॉट किमतीवर भारतीय कर आणि स्थानिक प्रीमियम लावून अचूक दर काढते.")
-    
-    gold_spot_usd, usd_to_inr = get_bhusawal_live_gold()
+    st.title("💰 भुसावळ लाईव्ह सोन्याचे पक्के बिल")
+    gold_spot_usd, usd_to_inr = get_live_gold_data()
     troy_ounce = 31.10347
     base_price = (gold_spot_usd * usd_to_inr) / troy_ounce
+    final_24k = base_price * 1.15 * 1.05
+    final_22k = final_24k * 0.916
     
-    final_24k = base_price * 1.15 * 1.05 * 1.624  
-    final_22k = final_24k * 0.9166                 
+    st.info(f"📊 **रिअल-टाइम चालू बाजारभाव:** २४K: ₹{final_24k:.2f}/ग्रॅम | २२K: ₹{final_22k:.2f}/ग्रॅम")
     
-    st.info(f"📊 **भुसावळ चालू बाजारभाव (GST सोडून):** २४K: ₹{final_24k:.2f}/ग्रॅम | २२K: ₹{final_22k:.2f}/ग्रॅम")
-    
-    weight = st.number_input("दागिन्याचे वजन टाका (ग्रॅम):", min_value=0.01, value=10.0, step=0.1)
-    making = st.number_input("घडणावळ (%) टाका:", min_value=0.0, value=12.0, step=0.5)
-    
+    col1, col2 = st.columns(2)
+    with col1:
+        weight = st.number_input("दागिन्याचे वजन (ग्रॅम):", min_value=0.1, value=10.0, step=0.1)
+    with col2:
+        making = st.number_input("घडणावळ (टक्केवारी %):", min_value=0.0, value=12.0, step=0.5)
+        
     if st.button("पक्के बिल जनरेट करा"):
         pure_cost = final_22k * weight
         making_cost = pure_cost * (making / 100)
@@ -60,9 +89,9 @@ if choice == "१. सोन्याचे पक्के बिल":
         st.success(f"### 🧾 सराफा पक्के बिल (२२K)")
         st.write(f"• सोन्याची मूळ किंमत: **₹{pure_cost:.2f}**")
         st.write(f"• घडणावळ ({making}%): **₹{making_cost:.2f}**")
-        st.write(f"• एकूण उप-किंमत (Sub-Total): **₹{sub_total:.2f}**")
+        st.write(f"• एकूण उप-किंमत: **₹{sub_total:.2f}**")
         st.write(f"• सरकारी कर (३% GST): **₹{gst:.2f}**")
-        st.markdown(f"## 🛍️ तुम्हाला द्यायची अंतिम रक्कम: **₹{total:.2f}**")
+        st.markdown(f"## 🛍️ अंतिम रक्कम: **₹{total:.2f}**")
 
 # ----------------- भाग २: प्रगत अल्गो ट्रॅकर -----------------
 elif choice == "२. मुकेश लाईव्ह अल्गो ट्रॅकर":
@@ -136,3 +165,4 @@ elif choice == "२. मुकेश लाईव्ह अल्गो ट्�
             
         st.subheader("📋 मागील ५ मिनिटांच्या कॅन्डल्सचा इतिहास")
         st.dataframe(data[['Close', 'EMA_50', 'RSI']].tail(10))
+        
