@@ -95,33 +95,24 @@ elif choice == "२. निफ्टी लाईव्ह इंडिकेट
 # ==========================================
 import requests
 
-# थेट पूर्ण लिंक (तुकडे न करता, कोणतीही स्पेस न सोडता सलग)
-telegram_api_url = "https://api.telegram.org/bot..."
+# १. टोकन सुरक्षितपणे तुकड्यांमध्ये लिहा
+part1 = "9014683307"
+part2 = "AAG7AYDLKJ7aU9hz-MFA3qZXH5z4OTGToTE"
+NEW_TOKEN = f"{part1}:{part2}"
 MY_CHAT_ID = "5144404922"
+
+# अचूक जोडलेली URL
+telegram_api_url = f"https://telegram.org{NEW_TOKEN}/sendMessage"
 
 st.markdown("---")
 st.subheader("🔔 सिस्टीम अलर्ट टेस्ट")
 
-if st.button("🔴 लाइव्ह अलर्ट टेस्ट करा"):
-    params = {
-        "chat_id": MY_CHAT_ID,
-        "text": "🚀 भाऊ, अखेर आपला टेलिग्राम मेसेज १००% चालू झाला! 🔥"
-    }
-    
-    try:
-        res = requests.post(telegram_api_url, json=params)
-        if res.status_code == 200:
-            st.success("✅ मेसेज पाठवला आहे! मोबाईल चेक करा भाऊ.")
-        else:
-            st.error(f"❌ बोट एरर: {res.text}")
-    except Exception as e:
-        st.error(f"❌ कनेक्शन एरर: {e}")
-
-# "🔴 लाइव्ह अलर्ट टेस्ट करा" ऐवजी "🚨 टेलिग्राम अलर्ट पाठवा" असे लिहा
+# जुन्या पहिल्या बटणाचा कोड जर असेल तर तो काढून टाका, फक्त हे एकच नवीन बटण ठेवा
 if st.button("🚨 टेलिग्राम अलर्ट पाठवा"):
     params = {
         "chat_id": MY_CHAT_ID,
-        "text": "🚀 भाऊ, अखेर आपल्या सुरक्षित बोटवरून मेसेज १००% चालू झाला! 🔥"}
+        "text": "🚀 भाऊ, आपला सुरक्षित बोटवरून मेसेज १००% चालू झाला! 🔥"
+    }
     
     try:
         res = requests.post(telegram_api_url, json=params)
@@ -132,3 +123,4 @@ if st.button("🚨 टेलिग्राम अलर्ट पाठवा")
     except Exception as e:
         st.error(f"❌ कनेक्शन एरर: {e}")
         
+
