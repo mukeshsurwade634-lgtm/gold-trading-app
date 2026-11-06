@@ -18,7 +18,7 @@ def send_telegram_alert(message):
     except:
         pass
 
-# २. सोन्याचा कोड (पूर्ण सुरक्षित)
+# २. सोन्याचा कोड (जसा आहे तसाच पूर्ण सुरक्षित)
 def get_bhusawal_live_gold():
     try:
         usd_res = requests.get("https://er-api.com", timeout=5).json()
@@ -32,14 +32,16 @@ def get_bhusawal_live_gold():
     except:
         return 2745.50, 84.35 
 
-# ३. हाय-स्पीड डायरेक्ट बायनान्स इंजिन
-def get_crypto_live_price():
+# ३. थेट याहू फायनान्स सर्व्हरवरून निफ्टी ५० चा चालू भाव गोळा करणारे वेगवान फंक्शन
+def get_live_nifty_price():
     try:
-        url = "https://binance.com"
-        res = requests.get(url, timeout=5).json()
-        return float(res['price'])
+        nifty_url = "https://yahoo.com^NSEI?interval=1m&range=1d"
+        headers = {'User-Agent': 'Mozilla/5.0'}
+        res = requests.get(nifty_url, headers=headers, timeout=5).json()
+        live_price = res['chart']['result']['meta']['regularMarketPrice']
+        return live_price
     except:
-        return 68250.00
+        return 24050.30  # सेफ बॅकअप भाव
 
 # ॲप मेनू
 st.sidebar.title("🎛️ मुकेश अल्गो कंट्रोल")
@@ -61,31 +63,30 @@ if choice == "१. सोन्याचे पक्के बिल":
         st.success(f"## 🛍️ अंतिम रक्कम: **₹{total:.2f}**")
 
 elif choice == "२. मुकेश प्रगत अल्गो ट्रॅकर":
-    st.title("🤖 मुकेश स्वयंचलित क्वांटिटेटिव्ह अल्गो सिस्टीम")
+    st.title("🤖 मुकेश स्वयंचलित निफ्टी ५० अल्गो सिस्टीम")
     
-    # व्हिडिओसारखा ऑटोमॅटिक रन होणारा ऑन/ऑफ स्विच
     st.subheader("⚙️ अल्गो रन मोड्स")
-    algo_active = st.checkbox("🔄 स्वयंचलित अल्गो अलर्ट सुरू करा (Auto-Run Mode)")
+    algo_active = st.checkbox("🔄 स्वयंचलित निफ्टी ५० अलर्ट सुरू करा (Auto-Run Mode)")
     
-    live_price = get_crypto_live_price()
-    st.metric("चालू बाजार किंमत (Live Price)", f"${live_price:.2f}")
+    # इथे आता बिटकॉइन ऐवजी निफ्टीचा चालू भाव रुपयांमध्ये दिसेल!
+    nifty_price = get_live_nifty_price()
+    st.metric("निफ्टी ५० चालू किंमत (Live Nifty Price)", f"₹{nifty_price:.2f}")
     
     if algo_active:
-        st.warning("⚠️ अल्गो सध्या बॅकग्राउंडला ऑटो-मोडवर चालू आहे. हा दर ३0 सेकंदांनी किंमत तपासेल...")
+        st.warning("⚠️ अल्गो सध्या चालू आहे. हा दर ३० सेकंदांनी निफ्टीची किंमत तपासेल...")
         
-        # सिमुलेटेड लूप - Streamlit साठी सुरक्षित पद्धत
         placeholder = st.empty()
-        for i in range(5): # ५ वेळा ऑटोमॅटिक चेक करेल
-            current_price = get_crypto_live_price()
+        for i in range(5): 
+            current_nifty = get_live_nifty_price()
             with placeholder.container():
-                st.write(f"🔍 तपासत आहे... चालू किंमत: ${current_price:.2f} (वेळ: {time.strftime('%H:%M:%S')})")
+                st.write(f"🔍 निफ्टी ट्रॅक करत आहे... चालू किंमत: ₹{current_nifty:.2f} (वेळ: {time.strftime('%H:%M:%S')})")
             
-            # ऑटोमॅटिक टेलिग्राम अलर्ट पाठवणे (बटण न दाबता)
-            auto_msg = f"🚨 *MUKESH AUTO ALGO ALERT*\n\n📈 Live Price: ${current_price:.2f}\n🎯 स्थिती: `AUTOMATIC TRACKING ACTIVE`"
+            # ऑटोमॅटिक टेलिग्राम मेसेज (निफ्टीच्या नावाने)
+            auto_msg = f"🚨 *MUKESH AUTO NIFTY ALERT*\n\n📈 Nifty 50 चालू किंमत: ₹{current_nifty:.2f}\n🎯 स्थिती: `INDIAN MARKET TRACKING ACTIVE`"
             send_telegram_alert(auto_msg)
             
-            time.sleep(30) # दर ३० सेकंदांनी ऑटोमॅटिक मेसेज पाठवेल
+            time.sleep(30) 
         st.success("✅ चाचणी लूप पूर्ण झाला! पुन्हा सुरू करण्यासाठी पेज रिफ्रेश करा.")
     else:
-        st.info("💡 व्हिडिओसारखे ऑटोमॅटिक मेसेज मिळवण्यासाठी वरील चेकबॉक्सवर टिक (✓) करा.")
+        st.info("💡 निफ्टी ५० चे ऑटोमॅटिक मेसेज मिळवण्यासाठी वरील चेकबॉक्सवर टिक (✓) करा.")
         
