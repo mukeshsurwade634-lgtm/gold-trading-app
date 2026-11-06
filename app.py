@@ -1,15 +1,24 @@
 import streamlit as st
 import requests
+import time
 
-st.set_page_config(page_title="मुकेश अल्गो ट्रेडिंग बाजार", layout="wide")
+st.set_page_config(page_title="मुकेश प्रगत अल्गो बाजार", layout="wide")
 
-# १. तुमच्या बॉटचा टोकन आणि आयडी
+# १. तुमच्या स्वतःचा अचूक टेलिग्राम टोकन कोड आणि पर्सनल आयडी
 part1 = "9037885219:AAE04b4NQxu"
 part2 = "5eM7Ijwmnt1CuS7tPHFjCVRI"
 TELEGRAM_TOKEN = part1 + part2
-CHAT_ID = 5144404922
+CHAT_ID = 5144404922  
 
-# २. सोन्याचा कोड (पूर्ण सुरक्षित, जसा आहे तसाच ठेवून)
+def send_telegram_alert(message):
+    try:
+        send_url = f"https://telegram.org{TELEGRAM_TOKEN}/sendMessage"
+        payload = {"chat_id": CHAT_ID, "text": message, "parse_mode": "Markdown"}
+        requests.post(send_url, json=payload, timeout=5)
+    except:
+        pass
+
+# २. सोन्याचा कोड (पूर्ण सुरक्षित)
 def get_bhusawal_live_gold():
     try:
         usd_res = requests.get("https://er-api.com", timeout=5).json()
@@ -23,80 +32,60 @@ def get_bhusawal_live_gold():
     except:
         return 2745.50, 84.35 
 
-# ३. थेट गुगल सर्व्हरवरून निफ्टी ५० चा अचूक भाव आणि बदल गोळा करणारे नवीन वेगवान फंक्शन
-def get_live_nifty_direct():
+# ३. हाय-स्पीड डायरेक्ट बायनान्स इंजिन
+def get_crypto_live_price():
     try:
-        nifty_url = "https://yahoo.com^NSEI?interval=1m&range=1d"
-        headers = {'User-Agent': 'Mozilla/5.0'}
-        res = requests.get(nifty_url, headers=headers, timeout=5).json()
-        meta = res['chart']['result'][0]['meta']
-        live_price = meta['regularMarketPrice']
-        prev_close = meta['previousClose']
-        change = live_price - prev_close
-        percent_change = (change / prev_close) * 100
-        return live_price, change, percent_change
+        url = "https://binance.com"
+        res = requests.get(url, timeout=5).json()
+        return float(res['price'])
     except:
-        return 24050.30, 0.0, 0.0
+        return 68250.00
 
 # ॲप मेनू
 st.sidebar.title("🎛️ मुकेश अल्गो कंट्रोल")
-choice = st.sidebar.selectbox("पर्याय निवडा:", ["१. सोन्याचे पक्के बिल", "२. मुकेश लाईव्ह अल्गो ट्रॅकर"])
+choice = st.sidebar.selectbox("पर्याय निवडा:", ["१. सोन्याचे पक्के बिल", "२. मुकेश प्रगत अल्गो ट्रॅकर"])
 
-# ----------------- भाग १: सोन्याचे कॅल्क्युलेटर (पूर्ण सुरक्षित) -----------------
 if choice == "१. सोन्याचे पक्के बिल":
     st.title("💰 मुकेश भुसावळ लाईव्ह सराफा कॅल्क्युलेटर")
-    st.write("हे ॲप आंतरराष्ट्रीय स्पॉट किमतीवर भारतीय कर आणि स्थानिक प्रीमियम लावून अचूक दर काढते.")
-    
     gold_spot_usd, usd_to_inr = get_bhusawal_live_gold()
     troy_ounce = 31.10347
     base_price = (gold_spot_usd * usd_to_inr) / troy_ounce
-    
     final_24k = base_price * 1.15 * 1.05 * 1.624  
     final_22k = final_24k * 0.9166                 
+    st.info(f"📊 **भुसावळ चालू बाजारभाव:** २४K: ₹{final_24k:.2f}/ग्रॅम | २२K: ₹{final_22k:.2f}/ग्रॅम")
     
-    st.info(f"📊 **भुसावळ चालू बाजारभाव (GST सोडून):** २४K: ₹{final_24k:.2f}/ग्रॅम | २२K: ₹{final_22k:.2f}/ग्रॅम")
-    st.caption(f"🌍 जागतिक सोने दर: ${gold_spot_usd:.2f} | डॉलर दर: ₹{usd_to_inr:.2f}")
-    
-    weight = st.number_input("दागिन्याचे वजन टाका (ग्रॅम):", min_value=0.01, value=10.0, step=0.1)
-    making = st.number_input("घडणावळ (%) टाका:", min_value=0.0, value=12.0, step=0.5)
-    
+    weight = st.number_input("दागिन्याचे वजन (ग्रॅम):", min_value=0.01, value=10.0)
+    making = st.number_input("घडणावळ (%):", min_value=0.0, value=12.0)
     if st.button("पक्के बिल जनरेट करा"):
-        pure_cost = final_22k * weight
-        making_cost = pure_cost * (making / 100)
-        sub_total = pure_cost + making_cost
-        gst = sub_total * 0.03
-        total = sub_total + gst
-        
-        st.success(f"### 🧾 सराफा पक्के बिल (२२K)")
-        st.write(f"• सोन्याची मूळ किंमत: **₹{pure_cost:.2f}**")
-        st.write(f"• घडणावळ ({making}%): **₹{making_cost:.2f}**")
-        st.write(f"• एकूण उप-किंमत: **₹{sub_total:.2f}**")
-        st.write(f"• सरकारी कर (३% GST): **₹{gst:.2f}**")
-        st.markdown(f"## 🛍️ तुम्हाला द्यायची अंतिम रक्कम: **₹{total:.2f}**")
+        total = (final_22k * weight * (1 + making/100)) * 1.03
+        st.success(f"## 🛍️ अंतिम रक्कम: **₹{total:.2f}**")
 
-# ----------------- भाग २: ट्रेडिंग ट्रॅकर (नवीन वेगवान सिस्टीम) -----------------
-elif choice == "२. मुकेश लाईव्ह अल्गो ट्रॅकर":
-    st.title("📊 मुकेश लाईव्ह निफ्टी ५० बाजार ट्रॅकर")
-    st.write("हा ट्रॅकर थेट इंटरनेटवरून चालू बाजारभाव आणि वाढ-घट एका सेकंदात स्क्रीनवर दाखवतो.")
+elif choice == "२. मुकेश प्रगत अल्गो ट्रॅकर":
+    st.title("🤖 मुकेश स्वयंचलित क्वांटिटेटिव्ह अल्गो सिस्टीम")
     
-    # थेट निफ्टीचा चालू आकडे गोळा करणे
-    nifty_live, change, pct_change = get_live_nifty_direct()
+    # व्हिडिओसारखा ऑटोमॅटिक रन होणारा ऑन/ऑफ स्विच
+    st.subheader("⚙️ अल्गो रन मोड्स")
+    algo_active = st.checkbox("🔄 स्वयंचलित अल्गो अलर्ट सुरू करा (Auto-Run Mode)")
     
-    # स्क्रीनवर चालू आकडे मांडणे
-    st.subheader("📈 चालू मार्केट स्थिती (Nifty 50 Live)")
+    live_price = get_crypto_live_price()
+    st.metric("चालू बाजार किंमत (Live Price)", f"${live_price:.2f}")
     
-    # वाढ झाली की हिरवा, घट झाली की लाल रंगात दाखवणारा सिस्टीम बॉक्स
-    if change >= 0:
-        st.success(f"## **चालू किंमत: ₹{nifty_live:.2f}** (📈 +₹{change:.2f} | +{pct_change:.2f}%)")
-        signal_text = "🚀 मार्केटचा कल सध्या तेजीचा (Bullish) दिसत आहे!"
-    else:
-        st.error(f"## **चालू किंमत: ₹{nifty_live:.2f}** (📉 -₹{abs(change):.2f} | {pct_change:.2f}%)")
-        signal_text = "💥 मार्केटचा कल सध्या मंदीचा (Bearish) दिसत आहे!"
+    if algo_active:
+        st.warning("⚠️ अल्गो सध्या बॅकग्राउंडला ऑटो-मोडवर चालू आहे. हा दर ३0 सेकंदांनी किंमत तपासेल...")
         
-    st.info(f"🤖 **अल्गो विश्लेषण:** {signal_text}")
-    
-    st.markdown("---")
-    st.subheader("📲 मुकेश अल्गो टेलिग्राम कम्युनिटी")
-    st.write("जर तुम्हाला लाईव्ह चार्ट आणि प्रगत सिग्नल्स थेट मोबाईलवर पाहायचे असतील, तर खालील आपल्या चॅनेलला भेट द्या:")
-    st.markdown("[📢 माझ्या टेलिग्राम चॅनेलवर जा (Scalping Mukesh)](https://t.me)")
-    
+        # सिमुलेटेड लूप - Streamlit साठी सुरक्षित पद्धत
+        placeholder = st.empty()
+        for i in range(5): # ५ वेळा ऑटोमॅटिक चेक करेल
+            current_price = get_crypto_live_price()
+            with placeholder.container():
+                st.write(f"🔍 तपासत आहे... चालू किंमत: ${current_price:.2f} (वेळ: {time.strftime('%H:%M:%S')})")
+            
+            # ऑटोमॅटिक टेलिग्राम अलर्ट पाठवणे (बटण न दाबता)
+            auto_msg = f"🚨 *MUKESH AUTO ALGO ALERT*\n\n📈 Live Price: ${current_price:.2f}\n🎯 स्थिती: `AUTOMATIC TRACKING ACTIVE`"
+            send_telegram_alert(auto_msg)
+            
+            time.sleep(30) # दर ३० सेकंदांनी ऑटोमॅटिक मेसेज पाठवेल
+        st.success("✅ चाचणी लूप पूर्ण झाला! पुन्हा सुरू करण्यासाठी पेज रिफ्रेश करा.")
+    else:
+        st.info("💡 व्हिडिओसारखे ऑटोमॅटिक मेसेज मिळवण्यासाठी वरील चेकबॉक्सवर टिक (✓) करा.")
+        
