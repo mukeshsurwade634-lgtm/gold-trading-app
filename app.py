@@ -96,7 +96,7 @@ elif choice == "२. निफ्टी लाईव्ह इंडिकेट
 import requests
 
 # थेट पूर्ण लिंक (तुकडे न करता, कोणतीही स्पेस न सोडता सलग)
-telegram_api_url = "https://telegram.org"
+telegram_api_url = "https://api.telegram.org/bot..."
 MY_CHAT_ID = "5144404922"
 
 st.markdown("---")
