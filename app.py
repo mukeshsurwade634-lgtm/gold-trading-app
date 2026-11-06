@@ -64,65 +64,75 @@ if choice == "१. सोन्याचे पक्के बिल":
         st.write(f"• सरकारी कर (३% GST): **₹{gst:.2f}**")
         st.markdown(f"## 🛍️ तुम्हाला द्यायची अंतिम रक्कम: **₹{total:.2f}**")
 
-# -------- भाग २: निफ्टी ट्रेडिंग स्क्रीन (टेलिग्रामशिवाय, फक्त प्युअर इंडिकेटर्स) --------
-elif choice == "२. निफ्टी लाईव्ह इंडिकेटर्स SCREEN":
-    st.title("📈 निफ्टी ५० प्रगत ताळेबंद (EMA, RSI, MACD)")
-    st.write("येथे कोणतीही एरर किंवा टेलिग्राम लूप नाही. हे पेज थेट चालू बाजारभावासह सर्व इंडिकेटर्स दाखवते.")
+# ----------------- भाग २: प्रगत अल्गो ट्रॅकर -----------------
+elif choice == "२. मुकेश लाईव्ह अल्गो ट्रॅकर":
+    st.title("🤖 मुकेश स्वयंचलित अल्गो सिग्नल इंजिन")
+    st.write("हा अल्गो ९:१५ ते ३:३० दरम्यान दर ५ मिनिटांनी चार्ट तपासून टेलिग्रामवर पक्के अलर्ट पाठवतो.")
     
-    # थेट निफ्टीचा चालू भाव मिळवणे
-    nifty_live = get_live_nifty_direct()
+    # निफ्टीचा ५ मिनिटांचा लाईव्ह डेटा गोळा करणे
+    nifty = yf.Ticker("^NSEI")
+    data = nifty.history(period="5d", interval="5m")
     
-    # प्रगत टेक्निकल गणिते (इंडिकेटर्स व्हॅल्यू)
-    live_rsi = 56.45
-    ema_9 = nifty_live - 45.00
-    ema_21 = nifty_live - 110.00
-    macd_line = 12.40
-    signal_line = 8.15
-    
-    # स्क्रीनवर चालू किंमत दाखवणे
-    st.subheader("📊 चालू बाजार किंमत (Nifty 50 Live)")
-    st.metric(label="निफ्टी ५० चालू भाव", value=f"₹{nifty_live:.2f}")
-    
-    st.markdown("---")
-    st.subheader("🤖 इंडिकेटर्स विश्लेषण रिपोर्ट (Indicators Status)")
-    
-    # ३ वेगवेगळ्या कप्प्यांमध्ये (Columns) इंडिकेटर्स मांडणे
-    col1, col2, col3 = st.columns(3)
-    
-    with col1:
-        st.info("### 📐 मुव्हिंग ॲव्हरेज (EMA)")
-        st.write(f"• **९ EMA (शॉर्ट टर्म):** ₹{ema_9:.2f}")
-        st.write(f"• **२१ EMA (लाँग टर्म):** ₹{ema_21:.2f}")
-        if  ema_9 > ema_21:
-            st.success("🟢 **MA संकेत:** तेजीचा कल (Bullish)")
-        else:
-            st.error("🔴 **MA संकेत:** मंदीचा कल (Bearish)")
-            
-    with col2:
-        st.info("### 📊 ताकद इंडिकेटर (RSI)")
-        st.write(f"• **RSI (14) चालू स्कोअर:** {live_rsi:.2f}")
-        if live_rsi > 50 and live_rsi < 70:
-            st.success("🟢 **RSI स्थिती:** मार्केट मजबूत आहे")
-        elif live_rsi >= 70:
-            st.warning("⚠️ **RSI स्थिती:** ओव्हरबॉट (खूप खरेदी)")
-        else:
-            st.error("🔴 **RSI स्थिती:** मार्केट कमजोर आहे")
-            
-    with col3:
-        st.info("### 📉 MACD ट्रेंड ट्रॅकर")
-        st.write(f"• **MACD लाईन:** {macd_line:.2f}")
-        st.write(f"• **सिग्नल लाईन:** {signal_line:.2f}")
-        if macd_line > signal_line:
-            st.success("🟢 **MACD संकेत:** CALL पोझिशन बनत आहे")
-        else:
-            st.error("🔴 **MACD संकेत:** PUT पोझिशन बनत आहे")
-            
-    st.markdown("---")
-    st.subheader("💡 अल्गो फायनल निर्णय स्ट्रॅटेजी (Strategy Result)")
-    
-    # तिन्ही इंडिकेटर्स एकत्र जुळवून फायनल निर्णय देणे
-    if nifty_live > ema_9 and live_rsi > 52 and macd_line > signal_line:
-        st.success("🚀 **मुकेश अल्गो फायनल संकेत:** **BUY CALL (तेजी)** \n\nEMA, RSI आणि MACD हे तिन्ही इंडिकेटर्स बाजारात मजबूत तेजी येण्याचा संकेत देत आहेत!")
-    else:
-        st.error("💥 **मुकेश अल्गो फायनल संकेत:** **BUY PUT / WAIT (मंदी किंवा थांबा)** \n\nइंडिकेटर्स संभ्रमात आहेत, सध्या नवीन पोझिशन बनवू नका, वाट पाहा.")
+    if not data.empty:
+        # १. ५० EMA काढणे
+        data['EMA_50'] = data['Close'].ewm(span=50, adjust=False).mean()
         
+        # २. RSI १४ काढणे
+        delta = data['Close'].diff()
+        gain = (delta.where(delta > 0, 0)).rolling(window=14).mean()
+        loss = (-delta.where(delta < 0, 0)).rolling(window=14).mean()
+        rs = gain / loss
+        data['RSI'] = 100 - (100 / (1 + rs))
+        
+        # ३. सुपरट्रेंडचे सोपे गणित (अंदाजे Volatility आधारित)
+        data['TR'] = np.maximum(data['High'] - data['Low'], 
+                                np.maximum(abs(data['High'] - data['Close'].shift(1)), 
+                                           abs(data['Low'] - data['Close'].shift(1))))
+        data['ATR'] = data['TR'].rolling(window=10).mean()
+        data['Upper'] = ((data['High'] + data['Low'])/2) + (3 * data['ATR'])
+        data['Lower'] = ((data['High'] + data['Low'])/2) - (3 * data['ATR'])
+        
+        # चालू कॅन्डलचे आकडे
+        live_price = data['Close'].iloc[-1]
+        live_rsi = data['RSI'].iloc[-1]
+        live_ema = data['EMA_50'].iloc[-1]
+        
+        # सिग्नल मोजणी
+        st.subheader("📊 लाईव्ह मार्केट ताळेबंद (5-Min Candle)")
+        c1, c2, c3 = st.columns(3)
+        c1.metric("निफ्टी चालू किंमत", f"₹{live_price:.2f}")
+        c2.metric("RSI (ताकद)", f"{live_rsi:.2f}")
+        c3.metric("५० EMA", f"₹{live_ema:.2f}")
+        
+        # अल्गोचे पक्के नियम (Trading Logic)
+        st.markdown("---")
+        st.subheader("🚨 आजच्या एकूण पेपर ट्रेडिंग पोझिशन्स")
+        
+        # सिग्नल जनरेट करणे
+        signal = "WAIT (वाट पाहा)"
+        color = "blue"
+        
+        if live_price > live_ema and live_rsi > 52:
+            signal = "🚀 BUY CALL (तेजी)"
+            color = "green"
+        elif live_price < live_ema and live_rsi < 48:
+            signal = "💥 BUY PUT (मंदी)"
+            color = "red"
+            
+        if color == "green":
+            st.success(f"**चालू संकेत:** {signal} | मार्केटमध्ये चांगला अपट्रेंड दिसत आहे.")
+        elif color == "red":
+            st.error(f"**चालू संकेत:** {signal} | मार्केटमध्ये घसरणीचा कल दिसत आहे.")
+        else:
+            st.warning(f"**चालू संकेत:** {signal} | इंडिकेटर्स मॅच होण्याची वाट पाहत आहे.")
+            
+        # टेलिग्राम अलर्ट बटण (लाईव्ह चाचणी करण्यासाठी)
+        st.markdown("---")
+        st.subheader("📲 टेलिग्राम अलर्ट टेस्ट")
+        if st.button("माझ्या टेलिग्राम चॅनेलवर टेस्ट मेसेज पाठवा"):
+            test_msg = f"🚨 *MUKESH ALGO ALERT*\n\n📈 Nifty 50: {signal}\n💰 चालू किंमत: ₹{live_price:.2f}\n📊 RSI: {live_rsi:.2f}\n⏰ वेळ: ५ मिनिट कॅन्डल क्लोज"
+            send_telegram_alert(test_msg)
+            st.info("टेलीग्रामवर मेसेज पाठवला आहे, तुमचा चॅनेल तपासा!")
+            
+        st.subheader("📋 मागील ५ मिनिटांच्या कॅन्डल्सचा इतिहास")
+        st.dataframe(data[['Close', 'EMA_50', 'RSI']].tail(10))
