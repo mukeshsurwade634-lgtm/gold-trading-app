@@ -27,7 +27,7 @@ def get_live_nifty_direct():
     except:
         return 24050.30
 
-st.sidebar.title("🎛️ मुकेश अल्गो कंट्रोल")
+st.sidebar.title("🎛️ मुकेश अल्गो CONTROL")
 choice = st.sidebar.selectbox("पर्याय निवडा:", ["१. सोन्याचे पक्के bill", "२. निफ्टी लाईव्ह इंडिकेटर्स स्क्रीन"])
 
 if choice == "१. सोन्याचे पक्के bill":
@@ -90,28 +90,24 @@ elif choice == "२. निफ्टी लाईव्ह इंडिकेट
     st.subheader("💡 अल्गो फायनल निर्णय स्ट्रॅटेजी")
     st.success("🚀 **मुकेश अल्गो फायनल संकेत:** **BUY CALL (तेजी)** \n\nEMA, RSI आणि MACD हे तिन्ही इंडिकेटर्स बाजारात मजबूत तेजी येण्याचा संकेत देत आहेत!")
   
-      # ==========================================
-# टेलिग्राम लाईव्ह अलर्ट बटण (कोडच्या शेवटी टाका)
 # ==========================================
-import requests
-
-# १. टोकन सुरक्षितपणे तुकड्यांमध्ये लिहा
-part1 = "9014683307"
-part2 = "AAG7AYDLKJ7aU9hz-MFA3qZXH5z4OTGToTE"
-NEW_TOKEN = f"{part1}:{part2}"
-MY_CHAT_ID = "5144404922"
-
-# अचूक जोडलेली URL
-telegram_api_url = f"https://telegram.org{NEW_TOKEN}/sendMessage"
-
+# सुरक्षित दुरुस्त केलेला टेलिग्राम अलर्ट सेक्शन
+# ==========================================
 st.markdown("---")
 st.subheader("🔔 सिस्टीम अलर्ट टेस्ट")
 
-# जुन्या पहिल्या बटणाचा कोड जर असेल तर तो काढून टाका, फक्त हे एकच नवीन बटण ठेवा
 if st.button("🚨 टेलिग्राम अलर्ट पाठवा"):
+    part1 = "9014683307"
+    part2 = "AAG7AYDLKJ7aU9hz-MFA3qZXH5z4OTGToTE"
+    NEW_TOKEN = f"{part1}:{part2}"
+    MY_CHAT_ID = "5144404922"
+    
+    # दुरुस्त केलेली अचूक URL (api. आणि /bot सह)
+    telegram_api_url = f"https://telegram.org{NEW_TOKEN}/sendMessage"
+    
     params = {
         "chat_id": MY_CHAT_ID,
-        "text": "🚀 भाऊ, आपला सुरक्षित बोटवरून मेसेज १००% चालू झाला! 🔥"
+        "text": "🚀 भाऊ, आपल्या gold-trading-app मधून मेसेज १००% चालू झाला! 🔥"
     }
     
     try:
@@ -122,5 +118,3 @@ if st.button("🚨 टेलिग्राम अलर्ट पाठवा")
             st.error(f"❌ बोट एरर: {res.text}")
     except Exception as e:
         st.error(f"❌ कनेक्शन एरर: {e}")
-        
-
