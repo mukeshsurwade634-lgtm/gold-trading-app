@@ -89,28 +89,34 @@ elif choice == "२. निफ्टी लाईव्ह इंडिकेट
     st.markdown("---")
     st.subheader("💡 अल्गो फायनल निर्णय स्ट्रॅटेजी")
     st.success("🚀 **मुकेश अल्गो फायनल संकेत:** **BUY CALL (तेजी)** \n\nEMA, RSI आणि MACD हे तिन्ही इंडिकेटर्स बाजारात मजबूत तेजी येण्याचा संकेत देत आहेत!")
-  # --- टेलिग्राम अलर्ट सेक्शन ---
+  
+      # ==========================================
+# टेलिग्राम लाईव्ह अलर्ट बटण (कोडच्या शेवटी टाका)
+# ==========================================
 import requests
 
-# टोकन आणि चॅट आयडी एकाच साध्या टेक्स्टमध्ये (String) लिहा
-telegram_url = "https://telegram.org"
+# १. तुझा बोट टोकन आणि तुझा अचूक आयडी
+NEW_TOKEN = "9037885219:AAEO4b4NQXu5eM7Ijwmnt1CuS7tPHFjCvRI"
+MY_CHAT_ID = "5144404922"  # इथे तुझा ९ अंकी नंबर टाक भाऊ
 
-# जेव्हा तुमच्या ॲपमध्ये सिग्नल जनरेट होईल किंवा बटण दाबाल
+telegram_api_url = f"https://api.telegram.org/bot{NEW_TOKEN}/sendMessage"
+
+# २. स्क्रीनवर बटण दाखवणे
+st.markdown("---")  # एक आडवी रेघ
+st.subheader("🔔 सिस्टीम अलर्ट टेस्ट")
+
 if st.button("🔴 लाइव्ह अलर्ट टेस्ट करा"):
-    # तुमचा userinfobot कडून मिळालेला ९ अंकी अचूक नंबर इथे टाका (उदा. 567891234)
-    my_chat_id = "तुमचा_अचूक_चॅट_आयडी_इथे_टाका" 
-    
-    payload = {
-        "chat_id": my_chat_id,
-        "text": "भाऊ, तुमच्या gold-trading-app मधून मेसेज आला आहे! 🚀"
+    params = {
+        "chat_id": MY_CHAT_ID,
+        "text": "💥 भाऊ, आपल्या gold-trading-app मधून मेसेज १००% चालू झाला! 🚀"
     }
     
-    # मेसेज पाठवणे
-    res = requests.post(telegram_url, json=payload)
-    
-    # स्क्रीनवर स्टेटस पाहण्यासाठी
-    if res.status_code == 200:
-        st.success("मेसेज मोबाईलवर पाठवला आहे!")
-    else:
-        st.error(f"काहीतरी चुकले: {res.text}")
-      
+    try:
+        res = requests.post(telegram_api_url, json=params)
+        if res.status_code == 200:
+            st.success("✅ टेलिग्रामवर मेसेज पाठवला आहे! मोबाईल चेक करा भाऊ.")
+        else:
+            st.error(f"❌ बोट एरर: {res.text}")
+    except Exception as e:
+        st.error(f"❌ कनेक्शन एरर: {e}")
+        
