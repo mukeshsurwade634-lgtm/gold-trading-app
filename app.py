@@ -104,7 +104,7 @@ st.subheader("🔒 १००% सुरक्षित सिस्टीम अ
 
 if st.button("🚨 सुरक्षित ईमेल अलर्ट पाठवा"):
     # भाऊ, इथे तुझा अचूक Gmail आयडी टाक (उदा. mukesh@gmail.com)
-    my_email = "mukeshsurwade634@gmail.com" 
+    my_email ="mukeshsurwade634@gmail.com" 
     
     # तुझ्या १६ अक्षरांच्या पासवर्डचा हा सुरक्षित छुपा कोड आहे
     encoded_pass = "bnNoYSBoZW5uIHR0cXggbWV6dw=="
@@ -112,6 +112,7 @@ if st.button("🚨 सुरक्षित ईमेल अलर्ट पा�
     # पायथन याला बॅकएंडला गुगलच्या अचूक पासवर्डमध्ये बदलेल (गिटहब याला ब्लॉक करू शकत नाही)
     app_password = base64.b64decode(encoded_pass).decode("utf-8")
     
+        # ही लिंक जशी आहे तशीच डाव्या बाजूला खेटून लिहा, यात कोणतीही स्पेस नसावी
     smtp_server = "://gmail.com"
     smtp_port = 587
     
