@@ -103,7 +103,7 @@ if st.button("🚨 टेलिग्राम अलर्ट पाठवा")
     MY_CHAT_ID = "5144404922"
     
     # दुरुस्त केलेली अचूक URL (api. आणि /bot सह)
-    telegram_api_url = f"https://telegram.org{NEW_TOKEN}/sendMessage"
+    telegram_api_url = f"https://api.telegram.org/bot..{NEW_TOKEN}/sendMessage"
     
     params = {
         "chat_id": MY_CHAT_ID,
