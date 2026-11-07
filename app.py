@@ -98,7 +98,8 @@ st.subheader("🔔 सिस्टीम अलर्ट टेस्ट")
 
 if st.button("🚨 टेलिग्राम अलर्ट पाठवा"):
     part1 = "9037885219"
-part2 = "AAEO4b4NQXu5eM7Ijwmnt1CuS7tPHFjCvRI"
+    part2 = "AAEO4b4NQXu5eM7Ijwmnt1CuS7tPHFjCvRI"
+
     NEW_TOKEN = f"{part1}:{part2}"
     MY_CHAT_ID = "5144404922"
     
