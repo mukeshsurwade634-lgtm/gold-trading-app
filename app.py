@@ -90,25 +90,23 @@ elif choice == "२. निफ्टी लाईव्ह इंडिकेट
     st.subheader("💡 अल्गो फायनल निर्णय स्ट्रॅटेजी")
     st.success("🚀 **मुकेश अल्गो फायनल संकेत:** **BUY CALL (तेजी)** \n\nEMA, RSI आणि MACD हे तिन्ही इंडिकेटर्स बाजारात मजबूत तेजी येण्याचा संकेत देत आहेत!")
   
+
 # ==========================================
-# सुरक्षित दुरुस्त केलेला टेलिग्राम अलर्ट सेक्शन
+# अंतिम दुरुस्त केलेला टेलिग्राम कोड
 # ==========================================
 st.markdown("---")
 st.subheader("🔔 सिस्टीम अलर्ट टेस्ट")
 
 if st.button("🚨 टेलिग्राम अलर्ट पाठवा"):
-    part1 = "9037885219"
-    part2 = "AAEO4b4NQXu5eM7Ijwmnt1CuS7tPHFjCvRI"
-
-    NEW_TOKEN = f"{part1}:{part2}"
+    # आपण टोकन एकदम सरळ आणि मधे विसर्ग (:) देऊन अचूक जोडला आहे
+    NEW_TOKEN = "9037885219:AAEO4b4NQXu5eM7Ijwmnt1CuS7tPHFjCvRI"
     MY_CHAT_ID = "5144404922"
     
-    # दुरुस्त केलेली अचूक URL (api. आणि /bot सह)
-    telegram_api_url = f"https://api.telegram.org/bot..{NEW_TOKEN}/sendMessage"
+    telegram_api_url = f"https://api.telegram.org/bot{NEW_TOKEN}/sendMessage"
     
     params = {
         "chat_id": MY_CHAT_ID,
-        "text": "🚀 भाऊ, आपल्या gold-trading-app मधून मेसेज १००% चालू झाला! 🔥"
+        "text": "🚀 भाऊ, अखेर आपला मेसेज १००% चालू झाला! 🔥"
     }
     
     try:
