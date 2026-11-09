@@ -26,12 +26,12 @@ def get_live_nifty_direct():
             live_price = todays_data['Close'].iloc[-1]
             return live_price
         else:
-            return 24864.00
+            return 24864.05
     except:
-        return 24864.00
+        return 24864.05
 
 st.sidebar.title("🎛️ मुकेश अल्गो CONTROL")
-choice = st.sidebar.selectbox("पर्याय निवडा:", ["१. सोन्याचे पक्के bill", "२. निफ्टी लाईव्ह इंडिकेटर्स स्क्रीन"])
+choice = st.sidebar.selectbox("पर्याय निवडा:", ["१. सोन्याचे पक्के bill", "२. निफ्टी लाईव्ह निकष स्क्रीन"])
 
 if choice == "१. सोन्याचे पक्के bill":
     st.title("💰 मुकेश भुसावळ लाईव्ह सराफा कॅल्क्युलेटर")
@@ -57,7 +57,7 @@ if choice == "१. सोन्याचे पक्के bill":
         total = sub_total + gst
         st.success(f"### 🧾 सराफा पक्के बिल (२२K)\n• मूळ किंमत: ₹{pure_cost:.2f}\n• घडणावळ: ₹{making_cost:.2f}\n• एकूण रक्कम GST सह: **₹{total:.2f}**")
 
-elif choice == "२. निफ्टी लाईव्ह इंडिकेटर्स स्क्रीन":
+elif choice == "२. निफ्टी लाईव्ह निकष स्क्रीन":
     st.title("📈 निफ्टी ५० प्रगत ताळेबंद (EMA, RSI, MACD)")
     nifty_live = get_live_nifty_direct()
     
@@ -91,5 +91,5 @@ elif choice == "२. निफ्टी लाईव्ह इंडिकेट
             
     st.markdown("---")
     st.subheader("💡 अल्गो फायनल निर्णय स्ट्रॅटेजी")
-    st.success("🚀 **मुकेश अल्गो फायनल संकेत:** **BUY CALL (तेजी)** \n\nEMA, RSI आणि MACD हे तिन्ही इंडिकेटर्स बाजारात मजबूत तेजी येण्याचा संकेत देत आहेत!")
+    st.success("🚀 **मुकेश अल्गो फायनल संकेत:** **BUY CALL (तेजी)** \n\nEMA, RSI आणि MACD हे तिन्ही इंडिकेटर्स बाजारात मजबूत तेजीी येण्याचा संकेत देत आहेत!")
     
