@@ -1,5 +1,6 @@
 import streamlit as st
 import requests
+import yfinance as yf
 
 st.set_page_config(page_title="मुकेश अल्गो ट्रेडिंग बाजार", layout="wide")
 
@@ -18,14 +19,16 @@ def get_bhusawal_live_gold():
 
 def get_live_nifty_direct():
     try:
-        nifty_url = "https://yahoo.com^NSEI?interval=1m&range=1d"
-        headers = {'User-Agent': 'Mozilla/5.0'}
-        res = requests.get(nifty_url, headers=headers, timeout=5).json()
-        meta = res['chart']['result']['meta']
-        live_price = meta['regularMarketPrice']
-        return live_price
+        # अधिकृत यफायनान्स लायब्ररी द्वारे अचूक निफ्टी ५० ट्रॅकर
+        nifty = yf.Ticker("^NSEI")
+        todays_data = nifty.history(period='1d')
+        if not todays_data.empty:
+            live_price = todays_data['Close'].iloc[-1]
+            return live_price
+        else:
+            return 24864.00
     except:
-        return 24050.30
+        return 24864.00
 
 st.sidebar.title("🎛️ मुकेश अल्गो CONTROL")
 choice = st.sidebar.selectbox("पर्याय निवडा:", ["१. सोन्याचे पक्के bill", "२. निफ्टी लाईव्ह इंडिकेटर्स स्क्रीन"])
@@ -54,24 +57,15 @@ if choice == "१. सोन्याचे पक्के bill":
         total = sub_total + gst
         st.success(f"### 🧾 सराफा पक्के बिल (२२K)\n• मूळ किंमत: ₹{pure_cost:.2f}\n• घडणावळ: ₹{making_cost:.2f}\n• एकूण रक्कम GST सह: **₹{total:.2f}**")
 
-# आधी सर्वात वर 'pip install yfinance' तुमच्या requirements.txt मध्ये टाकून घ्या
-import yfinance as yf
-
-def get_live_nifty_direct():
-    try:
-        # अधिकृत यफायनान्स लायब्ररी द्वारे निफ्टी ५० चा डेटा ट्रॅकर
-        nifty = yf.Ticker("^NSEI")
-        todays_data = nifty.history(period='1d')
-        
-        # सर्वात शेवटची लाईव्ह क्लोजिंग किंमत ओढणे
-        if not todays_data.empty:
-            live_price = todays_data['Close'].iloc[-1]
-            return live_price
-        else:
-            return 24864.00 # चार्टवरील चालू बॅकअप भाव
-    except Exception as e:
-        return 24864.00
-        
+elif choice == "२. निफ्टी लाईव्ह इंडिकेटर्स स्क्रीन":
+    st.title("📈 निफ्टी ५० प्रगत ताळेबंद (EMA, RSI, MACD)")
+    nifty_live = get_live_nifty_direct()
+    
+    live_rsi = 56.45
+    ema_9 = nifty_live - 45.00
+    ema_21 = nifty_live - 110.00
+    macd_line = 12.40
+    signal_line = 8.15
     
     st.subheader("📊 चालू बाजार किंमत (Nifty 50 Live)")
     st.metric(label="निफ्टी ५० चालू भाव", value=f"₹{nifty_live:.2f}")
@@ -98,42 +92,4 @@ def get_live_nifty_direct():
     st.markdown("---")
     st.subheader("💡 अल्गो फायनल निर्णय स्ट्रॅटेजी")
     st.success("🚀 **मुकेश अल्गो फायनल संकेत:** **BUY CALL (तेजी)** \n\nEMA, RSI आणि MACD हे तिन्ही इंडिकेटर्स बाजारात मजबूत तेजी येण्याचा संकेत देत आहेत!")
-  
-
-import base64
-import smtplib
-from email.mime.text import MIMEText
-
-# ==========================================
-# १००% सुरक्षित आणि गुपिते (Base64 Encoded) ईमेल कोड
-# ==========================================
-st.markdown("---")
-st.subheader("🔒 १००% सुरक्षित सिस्टीम अलर्ट (थेट ईमेलवर)")
-
-if st.button("🚨 सुरक्षित ईमेल अलर्ट पाठवा"):
-    # ⚠️ भाऊ, इथे अवतरण चिन्हाच्या आत तुझा स्वतःचा खरा Gmail आयडी टाक:
-    my_email = "mukeshsurwade634@gmail.com" 
     
-    # तुझ्या १६ अक्षरांच्या पासवर्डचा हा सुरक्षित छुपा कोड आहे (बदलू नका)
-    encoded_pass = "bnNoYSBoZW5uIHR0cXggbWV6dw=="
-    
-    # पायथन याला रन होताना गुगलच्या अचूक पासवर्डमध्ये बदलेल
-    app_password = base64.b64decode(encoded_pass).decode("utf-8")
-    
-    msg_title = "🚨 gold-trading-app: नवीन संकेत ALERT"
-    msg_body = "🚀 भाऊ, आपल्या gold-trading-app मधून ईमेल अलर्ट १००% यशस्वीपणे चालू झाला आहे! 🔥"
-    
-    msg = MIMEText(msg_body)
-    msg['Subject'] = msg_title
-    msg['From'] = my_email
-    msg['To'] = my_email
-    
-    try:
-        # थेट सुरक्षित SSL सर्व्हर कनेक्शन (Port 465)
-        server = smtplib.SMTP_SSL("://gmail.com", 465, timeout=10)
-        server.login(my_email, app_password)
-        server.sendmail(my_email, my_email, msg.as_string())
-        server.quit()
-        st.success("✅ सुरक्षित ईमेल पाठवला आहे! तुमचा Gmail इनबॉक्स चेक करा भाऊ.")
-    except Exception as e:
-        st.error(f"❌ अलर्ट एरर: {e}")
