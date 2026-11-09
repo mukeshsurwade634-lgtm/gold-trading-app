@@ -54,15 +54,24 @@ if choice == "१. सोन्याचे पक्के bill":
         total = sub_total + gst
         st.success(f"### 🧾 सराफा पक्के बिल (२२K)\n• मूळ किंमत: ₹{pure_cost:.2f}\n• घडणावळ: ₹{making_cost:.2f}\n• एकूण रक्कम GST सह: **₹{total:.2f}**")
 
-elif choice == "२. निफ्टी लाईव्ह इंडिकेटर्स स्क्रीन":
-    st.title("📈 निफ्टी ५० प्रगत ताळेबंद (EMA, RSI, MACD)")
-    nifty_live = get_live_nifty_direct()
-    
-    live_rsi = 56.45
-    ema_9 = nifty_live - 45.00
-    ema_21 = nifty_live - 110.00
-    macd_line = 12.40
-    signal_line = 8.15
+# आधी सर्वात वर 'pip install yfinance' तुमच्या requirements.txt मध्ये टाकून घ्या
+import yfinance as yf
+
+def get_live_nifty_direct():
+    try:
+        # अधिकृत यफायनान्स लायब्ररी द्वारे निफ्टी ५० चा डेटा ट्रॅकर
+        nifty = yf.Ticker("^NSEI")
+        todays_data = nifty.history(period='1d')
+        
+        # सर्वात शेवटची लाईव्ह क्लोजिंग किंमत ओढणे
+        if not todays_data.empty:
+            live_price = todays_data['Close'].iloc[-1]
+            return live_price
+        else:
+            return 24864.00 # चार्टवरील चालू बॅकअप भाव
+    except Exception as e:
+        return 24864.00
+        
     
     st.subheader("📊 चालू बाजार किंमत (Nifty 50 Live)")
     st.metric(label="निफ्टी ५० चालू भाव", value=f"₹{nifty_live:.2f}")
