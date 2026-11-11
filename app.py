@@ -1,14 +1,13 @@
 import streamlit as st
-from streamlit_autorefresh import st_autorefresh
-
-# दर ६० सेकंदांनी (1 मिनिटाने) ॲप आपोआप रिफ्रेश होईल
-st_autorefresh(interval=60000, key="nifty_auto_refresh")
-
-import plotly.graph_objects as go
 import requests
 import yfinance as yf
+import plotly.graph_objects as go
+from streamlit_autorefresh import st_autorefresh
 
 st.set_page_config(page_title="मुकेश अल्गो ट्रेडिंग बाजार", layout="wide")
+
+# दर ६० सेकंदांनी (1 मिनिटाने) ॲप आपोआप रिफ्रेश होईल
+st_autorefresh(interval=60000, key="algo_auto_refresh")
 
 def get_bhusawal_live_gold():
     try:
@@ -22,19 +21,6 @@ def get_bhusawal_live_gold():
         return gold_spot_usd, inr_rate
     except:
         return 2745.50, 84.35 
-
-def get_live_nifty_direct():
-    try:
-        # अधिकृत यफायनान्स लायब्ररी द्वारे अचूक निफ्टी ५० ट्रॅकर
-        nifty = yf.Ticker("^NSEI")
-        todays_data = nifty.history(period='1d')
-        if not todays_data.empty:
-            live_price = todays_data['Close'].iloc[-1]
-            return live_price
-        else:
-            return 24864.05
-    except:
-        return 24864.05
 
 st.sidebar.title("🎛️ मुकेश अल्गो CONTROL")
 choice = st.sidebar.selectbox("पर्याय निवडा:", [
@@ -70,12 +56,10 @@ if choice == "१. सोन्याचे पक्के bill":
 elif choice == "२. निफ्टी लाईव्ह निकष स्क्रीन":
     st.title("📈 निफ्टी ५० इंट्राडे अल्गो (5m चार्ट आणि बाण)")
     
-    # १. अचूक ५ मिनिटांच्या (5m) कॅंडल्ससाठी आजचा डेटा ओढणे
     nifty = yf.Ticker("^NSEI")
     df = nifty.history(period="1d", interval="5m")
     
     if not df.empty:
-        # इंडिकेटर्स मोजणे
         df['EMA_9'] = df['Close'].ewm(span=9, adjust=False).mean()
         df['EMA_21'] = df['Close'].ewm(span=21, adjust=False).mean()
         
@@ -85,19 +69,14 @@ elif choice == "२. निफ्टी लाईव्ह निकष स्�
         rs = gain / loss
         df['RSI'] = 100 - (100 / (1 + rs))
         
-        # आजचा शेवटचा भाग (शेवटच्या ६० कॅंडल्स) चार्टवर दाखवण्यासाठी वेगळा करणे
         df_chart = df.tail(60).copy()
-        
-        # BUY आणि SELL चे बाण (Arrows) शोधण्याचे लॉजिक
         buy_signals = []
         sell_signals = []
         
         for i in range(1, len(df_chart)):
-            # जेव्हा ९ EMA ने २१ EMA ला खालून वर क्रॉस केले (BUY बाण)
             if df_chart['EMA_9'].iloc[i] > df_chart['EMA_21'].iloc[i] and df_chart['EMA_9'].iloc[i-1] <= df_chart['EMA_21'].iloc[i-1]:
                 buy_signals.append(df_chart['Low'].iloc[i] - 10)
                 sell_signals.append(None)
-            # जेव्हा ९ EMA ने २१ EMA ला वरून खाली क्रॉस केले (SELL बाण)
             elif df_chart['EMA_9'].iloc[i] < df_chart['EMA_21'].iloc[i] and df_chart['EMA_9'].iloc[i-1] >= df_chart['EMA_21'].iloc[i-1]:
                 sell_signals.append(df_chart['High'].iloc[i] + 10)
                 buy_signals.append(None)
@@ -105,7 +84,6 @@ elif choice == "२. निफ्टी लाईव्ह निकष स्�
                 buy_signals.append(None)
                 sell_signals.append(None)
                 
-        # पहिल्या कॅंडलसाठी रिकामी जागा
         buy_signals.insert(0, None)
         sell_signals.insert(0, None)
 
@@ -114,35 +92,24 @@ elif choice == "२. निफ्टी लाईव्ह निकष स्�
         ema_21 = df_chart['EMA_21'].iloc[-1]
         live_rsi = df_chart['RSI'].iloc[-1]
 
-        # चालू भाव दाखवणे
         st.metric(label="निफ्टी ५० चालू भाव (5m)", value=f"₹{nifty_live:.2f}")
         
-        # २. कॅंडलस्टिक चार्ट आणि बाण तयार करणे
         fig = go.Figure()
-        
-        # कॅंडल्स (Candlesticks)
         fig.add_trace(go.Candlestick(
             x=df_chart.index.strftime('%H:%M'), open=df_chart['Open'], high=df_chart['High'],
             low=df_chart['Low'], close=df_chart['Close'], name='Nifty 5m'
         ))
-        
-        # ९ आणि २१ EMA रेषा
         fig.add_trace(go.Scatter(x=df_chart.index.strftime('%H:%M'), y=df_chart['EMA_9'], line=dict(color='cyan', width=1.5), name='9 EMA'))
         fig.add_trace(go.Scatter(x=df_chart.index.strftime('%H:%M'), y=df_chart['EMA_21'], line=dict(color='orange', width=1.5), name='21 EMA'))
-        
-        # हिरवा BUY बाण
         fig.add_trace(go.Scatter(
             x=df_chart.index.strftime('%H:%M'), y=buy_signals, mode='markers',
             marker=dict(symbol='triangle-up', size=14, color='#00ff00'), name='BUY संकेत'
         ))
-        
-        # लाल SELL बाण
         fig.add_trace(go.Scatter(
             x=df_chart.index.strftime('%H:%M'), y=sell_signals, mode='markers',
             marker=dict(symbol='triangle-down', size=14, color='#ff0000'), name='SELL संकेत'
         ))
         
-        # अचूक स्पेसिंग असलेला लेआउट (गॅप नसलेला ५ मिनिटांचा चार्ट)
         fig.update_layout(
             template="plotly_dark",
             xaxis_rangeslider_visible=False,
@@ -151,10 +118,8 @@ elif choice == "२. निफ्टी लाईव्ह निकष स्�
             margin=dict(l=10, r=10, t=30, b=10)
         )
         
-        # स्क्रीनवर चार्ट दाखवणे
         st.plotly_chart(fig, use_container_width=True)
         
-        # ३. अल्गो फायनल निर्णय बॉक्स
         st.subheader("💡 अल्गो फायनल निर्णय (इंट्राडे)")
         ema_diff = abs(ema_9 - ema_21)
         
@@ -168,43 +133,35 @@ elif choice == "२. निफ्टी लाईव्ह निकष स्�
             st.info("⚖️ **प्रतीक्षा करा:** इंडिकेटर्स पूर्णपणे जुळण्याची वाट पहा.")
     else:
         st.error("सध्या मार्केट डेटा उपलब्ध नाही, थोड्या वेळाने प्रयत्न करा.")
-        elif choice == "३. बिटकॉइन (BTC/USD) लाईव्ह चार्ट":
+
+elif choice == "३. बिटकॉइन (BTC/USD) लाईव्ह चार्ट":
     st.title("🪙 बिटकॉइन (BTC/USD) फिबोनाची अल्गो सेटअप")
     
-    # १. बिटकॉइनचा ५ मिनिटांचा (5m) लाईव्ह डेटा ओढणे
     btc = yf.Ticker("BTC-USD")
     df_btc = btc.history(period="1d", interval="5m")
     
     if not df_btc.empty:
-        # आजच्या शेवटच्या ६० कॅंडल्स चार्टवर दाखवण्यासाठी वेगळ्या करणे
         df_chart = df_btc.tail(60).copy()
         btc_live = df_chart['Close'].iloc[-1]
         
-        # २. फिबोनाची लेव्हल्स काढण्यासाठी सर्वात उंच (High) आणि सर्वात खालचा (Low) भाव शोधणे
         swing_high = df_chart['High'].max()
         swing_low = df_chart['Low'].min()
         diff = swing_high - swing_low
         
-        # मुख्य फिबोनाची रेषांचे गणित (Golden Ratios)
         fib_0 = swing_high
         fib_382 = swing_high - (0.382 * diff)
         fib_500 = swing_high - (0.500 * diff)
-        fib_618 = swing_high - (0.618 * diff) # गोल्डन झोन
+        fib_618 = swing_high - (0.618 * diff)
         fib_100 = swing_low
 
-        # चालू भाव स्क्रीनवर दाखवणे
         st.metric(label="बिटकॉइन चालू भाव (BTC/USD)", value=f"${btc_live:,.2f}")
         
-        # ३. कॅंडलस्टिक चार्ट आणि फिबोनाची रेषा तयार करणे
         fig_fib = go.Figure()
-        
-        # कॅंडल्स (Candlesticks)
         fig_fib.add_trace(go.Candlestick(
             x=df_chart.index.strftime('%H:%M'), open=df_chart['Open'], high=df_chart['High'],
             low=df_chart['Low'], close=df_chart['Close'], name='BTC-USD'
         ))
         
-        # चार्टवर फिबोनाची आडव्या रेषा (Horizontal Lines) काढणे
         fig_fib.add_hline(y=fib_0, line_dash="dash", line_color="red", annotation_text=f"0.0% High (${fib_0:,.0f})")
         fig_fib.add_hline(y=fib_382, line_dash="dot", line_color="cyan", annotation_text=f"38.2% (${fib_382:,.0f})")
         fig_fib.add_hline(y=fib_500, line_dash="dash", line_color="yellow", annotation_text=f"50.0% (${fib_500:,.0f})")
@@ -219,13 +176,10 @@ elif choice == "२. निफ्टी लाईव्ह निकष स्�
             margin=dict(l=10, r=10, t=30, b=10)
         )
         
-        # स्क्रीनवर चार्ट दाखवणे
         st.plotly_chart(fig_fib, use_container_width=True)
         
-        # ४. फिबोनाचीनुसार ट्रेडिंग सिग्नल बॉक्स
         st.subheader("💡 फिबोनाची स्ट्रॅटेजी निरीक्षण")
         
-        # जर चालू किंमत ०.५ (50%) आणि ०.६१८ (61.8%) या गोल्डन झोनच्या आसपास असेल तर
         if fib_618 <= btc_live <= fib_500:
             st.success(f"🎯 **गोल्डन झोन अलर्ट (BUY संधी):** \n\nबिटकॉइनची किंमत सध्या **५०% (${fib_500:,.0f}) ते ६१.८% (${fib_618:,.0f})** या मजबूत सपोर्ट झोनमध्ये आहे! इथून वर रिव्हर्सल होण्याची शक्यता तपासा.")
         elif btc_live > fib_382:
@@ -236,4 +190,4 @@ elif choice == "२. निफ्टी लाईव्ह निकष स्�
             st.warning("⚖️ **प्रतीक्षा करा:** किंमत फिबोनाचीच्या मुख्य रेषेजवळ येण्याची वाट पहा.")
     else:
         st.error("सध्या बिटकॉइन डेटा उपलब्ध नाही.")
-    
+        
