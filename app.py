@@ -37,7 +37,11 @@ def get_live_nifty_direct():
         return 24864.05
 
 st.sidebar.title("🎛️ मुकेश अल्गो CONTROL")
-choice = st.sidebar.selectbox("पर्याय निवडा:", ["१. सोन्याचे पक्के bill", "२. निफ्टी लाईव्ह निकष स्क्रीन"])
+choice = st.sidebar.selectbox("पर्याय निवडा:", [
+    "१. सोन्याचे पक्के bill", 
+    "२. निफ्टी लाईव्ह निकष स्क्रीन", 
+    "३. बिटकॉइन (BTC/USD) लाईव्ह चार्ट"
+])
 
 if choice == "१. सोन्याचे पक्के bill":
     st.title("💰 मुकेश भुसावळ लाईव्ह सराफा कॅल्क्युलेटर")
@@ -164,4 +168,72 @@ elif choice == "२. निफ्टी लाईव्ह निकष स्�
             st.info("⚖️ **प्रतीक्षा करा:** इंडिकेटर्स पूर्णपणे जुळण्याची वाट पहा.")
     else:
         st.error("सध्या मार्केट डेटा उपलब्ध नाही, थोड्या वेळाने प्रयत्न करा.")
+        elif choice == "३. बिटकॉइन (BTC/USD) लाईव्ह चार्ट":
+    st.title("🪙 बिटकॉइन (BTC/USD) फिबोनाची अल्गो सेटअप")
+    
+    # १. बिटकॉइनचा ५ मिनिटांचा (5m) लाईव्ह डेटा ओढणे
+    btc = yf.Ticker("BTC-USD")
+    df_btc = btc.history(period="1d", interval="5m")
+    
+    if not df_btc.empty:
+        # आजच्या शेवटच्या ६० कॅंडल्स चार्टवर दाखवण्यासाठी वेगळ्या करणे
+        df_chart = df_btc.tail(60).copy()
+        btc_live = df_chart['Close'].iloc[-1]
         
+        # २. फिबोनाची लेव्हल्स काढण्यासाठी सर्वात उंच (High) आणि सर्वात खालचा (Low) भाव शोधणे
+        swing_high = df_chart['High'].max()
+        swing_low = df_chart['Low'].min()
+        diff = swing_high - swing_low
+        
+        # मुख्य फिबोनाची रेषांचे गणित (Golden Ratios)
+        fib_0 = swing_high
+        fib_382 = swing_high - (0.382 * diff)
+        fib_500 = swing_high - (0.500 * diff)
+        fib_618 = swing_high - (0.618 * diff) # गोल्डन झोन
+        fib_100 = swing_low
+
+        # चालू भाव स्क्रीनवर दाखवणे
+        st.metric(label="बिटकॉइन चालू भाव (BTC/USD)", value=f"${btc_live:,.2f}")
+        
+        # ३. कॅंडलस्टिक चार्ट आणि फिबोनाची रेषा तयार करणे
+        fig_fib = go.Figure()
+        
+        # कॅंडल्स (Candlesticks)
+        fig_fib.add_trace(go.Candlestick(
+            x=df_chart.index.strftime('%H:%M'), open=df_chart['Open'], high=df_chart['High'],
+            low=df_chart['Low'], close=df_chart['Close'], name='BTC-USD'
+        ))
+        
+        # चार्टवर फिबोनाची आडव्या रेषा (Horizontal Lines) काढणे
+        fig_fib.add_hline(y=fib_0, line_dash="dash", line_color="red", annotation_text=f"0.0% High (${fib_0:,.0f})")
+        fig_fib.add_hline(y=fib_382, line_dash="dot", line_color="cyan", annotation_text=f"38.2% (${fib_382:,.0f})")
+        fig_fib.add_hline(y=fib_500, line_dash="dash", line_color="yellow", annotation_text=f"50.0% (${fib_500:,.0f})")
+        fig_fib.add_hline(y=fib_618, line_dash="solid", line_color="#00ff00", annotation_text=f"61.8% Golden (${fib_618:,.0f})")
+        fig_fib.add_hline(y=fib_100, line_dash="dash", line_color="white", annotation_text=f"100% Low (${fib_100:,.0f})")
+        
+        fig_fib.update_layout(
+            template="plotly_dark", 
+            xaxis_rangeslider_visible=False, 
+            xaxis_type="category", 
+            height=480, 
+            margin=dict(l=10, r=10, t=30, b=10)
+        )
+        
+        # स्क्रीनवर चार्ट दाखवणे
+        st.plotly_chart(fig_fib, use_container_width=True)
+        
+        # ४. फिबोनाचीनुसार ट्रेडिंग सिग्नल बॉक्स
+        st.subheader("💡 फिबोनाची स्ट्रॅटेजी निरीक्षण")
+        
+        # जर चालू किंमत ०.५ (50%) आणि ०.६१८ (61.8%) या गोल्डन झोनच्या आसपास असेल तर
+        if fib_618 <= btc_live <= fib_500:
+            st.success(f"🎯 **गोल्डन झोन अलर्ट (BUY संधी):** \n\nबिटकॉइनची किंमत सध्या **५०% (${fib_500:,.0f}) ते ६१.८% (${fib_618:,.0f})** या मजबूत सपोर्ट झोनमध्ये आहे! इथून वर रिव्हर्सल होण्याची शक्यता तपासा.")
+        elif btc_live > fib_382:
+            st.info("📈 **मजबूत तेजी (Strong Uptrend):** किंमत ३८.२% च्या वर आहे, मार्केट तेजीत आहे.")
+        elif btc_live < fib_618:
+            st.error("⚠️ **सपोर्ट तुटला (Breakdown):** किंमत ६१.८% च्या गोल्डन रेषेच्या खाली गेली आहे, खरेदी करणे टाळा.")
+        else:
+            st.warning("⚖️ **प्रतीक्षा करा:** किंमत फिबोनाचीच्या मुख्य रेषेजवळ येण्याची वाट पहा.")
+    else:
+        st.error("सध्या बिटकॉइन डेटा उपलब्ध नाही.")
+    
