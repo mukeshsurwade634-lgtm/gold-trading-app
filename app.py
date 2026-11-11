@@ -66,7 +66,7 @@ if choice == "१. सोन्याचे पक्के bill":
 elif choice == "२. निफ्टी लाईव्ह निकष स्क्रीन":
     st.title("📈 निफ्टी ५० इंट्राडे अल्गो (5m चार्ट आणि बाण)")
     
-    # १. ५ मिनिटांचा (5m) लाईव्ह डेटा ओढणे
+    # १. अचूक ५ मिनिटांच्या (5m) कॅंडल्ससाठी आजचा डेटा ओढणे
     nifty = yf.Ticker("^NSEI")
     df = nifty.history(period="1d", interval="5m")
     
@@ -91,11 +91,11 @@ elif choice == "२. निफ्टी लाईव्ह निकष स्�
         for i in range(1, len(df_chart)):
             # जेव्हा ९ EMA ने २१ EMA ला खालून वर क्रॉस केले (BUY बाण)
             if df_chart['EMA_9'].iloc[i] > df_chart['EMA_21'].iloc[i] and df_chart['EMA_9'].iloc[i-1] <= df_chart['EMA_21'].iloc[i-1]:
-                buy_signals.append(df_chart['Low'].iloc[i] - 10) # कॅंडलच्या थोडे खाली बाण दिसेल
+                buy_signals.append(df_chart['Low'].iloc[i] - 10)
                 sell_signals.append(None)
             # जेव्हा ९ EMA ने २१ EMA ला वरून खाली क्रॉस केले (SELL बाण)
             elif df_chart['EMA_9'].iloc[i] < df_chart['EMA_21'].iloc[i] and df_chart['EMA_9'].iloc[i-1] >= df_chart['EMA_21'].iloc[i-1]:
-                sell_signals.append(df_chart['High'].iloc[i] + 10) # कॅंडलच्या थोडे वर बाण दिसेल
+                sell_signals.append(df_chart['High'].iloc[i] + 10)
                 buy_signals.append(None)
             else:
                 buy_signals.append(None)
@@ -110,7 +110,7 @@ elif choice == "२. निफ्टी लाईव्ह निकष स्�
         ema_21 = df_chart['EMA_21'].iloc[-1]
         live_rsi = df_chart['RSI'].iloc[-1]
 
-        # चालू भाव आणि इंडिकेटर्स दाखवणे
+        # चालू भाव दाखवणे
         st.metric(label="निफ्टी ५० चालू भाव (5m)", value=f"₹{nifty_live:.2f}")
         
         # २. कॅंडलस्टिक चार्ट आणि बाण तयार करणे
@@ -118,29 +118,33 @@ elif choice == "२. निफ्टी लाईव्ह निकष स्�
         
         # कॅंडल्स (Candlesticks)
         fig.add_trace(go.Candlestick(
-            x=df_chart.index, open=df_chart['Open'], high=df_chart['High'],
+            x=df_chart.index.strftime('%H:%M'), open=df_chart['Open'], high=df_chart['High'],
             low=df_chart['Low'], close=df_chart['Close'], name='Nifty 5m'
         ))
         
         # ९ आणि २१ EMA रेषा
-        fig.add_trace(go.Scatter(x=df_chart.index, y=df_chart['EMA_9'], line=dict(color='cyan', width=1.5), name='9 EMA'))
-        fig.add_trace(go.Scatter(x=df_chart.index, y=df_chart['EMA_21'], line=dict(color='orange', width=1.5), name='21 EMA'))
+        fig.add_trace(go.Scatter(x=df_chart.index.strftime('%H:%M'), y=df_chart['EMA_9'], line=dict(color='cyan', width=1.5), name='9 EMA'))
+        fig.add_trace(go.Scatter(x=df_chart.index.strftime('%H:%M'), y=df_chart['EMA_21'], line=dict(color='orange', width=1.5), name='21 EMA'))
         
-        # हिरवा BUY बाण (वरच्या दिशेने तोंड असलेला त्रिकोण)
+        # हिरवा BUY बाण
         fig.add_trace(go.Scatter(
-            x=df_chart.index, y=buy_signals, mode='markers',
+            x=df_chart.index.strftime('%H:%M'), y=buy_signals, mode='markers',
             marker=dict(symbol='triangle-up', size=14, color='#00ff00'), name='BUY संकेत'
         ))
         
-        # लाल SELL बाण (खालच्या दिशेने तोंड असलेला त्रिकोण)
+        # लाल SELL बाण
         fig.add_trace(go.Scatter(
-            x=df_chart.index, y=sell_signals, mode='markers',
+            x=df_chart.index.strftime('%H:%M'), y=sell_signals, mode='markers',
             marker=dict(symbol='triangle-down', size=14, color='#ff0000'), name='SELL संकेत'
         ))
         
+        # अचूक स्पेसिंग असलेला लेआउट (गॅप नसलेला ५ मिनिटांचा चार्ट)
         fig.update_layout(
-            template="plotly_dark", xaxis_rangeslider_visible=False,
-            height=450, margin=dict(l=10, r=10, t=30, b=10)
+            template="plotly_dark",
+            xaxis_rangeslider_visible=False,
+            xaxis_type="category",
+            height=450,
+            margin=dict(l=10, r=10, t=30, b=10)
         )
         
         # स्क्रीनवर चार्ट दाखवणे
@@ -160,11 +164,4 @@ elif choice == "२. निफ्टी लाईव्ह निकष स्�
             st.info("⚖️ **प्रतीक्षा करा:** इंडिकेटर्स पूर्णपणे जुळण्याची वाट पहा.")
     else:
         st.error("सध्या मार्केट डेटा उपलब्ध नाही, थोड्या वेळाने प्रयत्न करा.")
-                fig.update_layout(
-            template="plotly_dark", 
-            xaxis_rangeslider_visible=False,
-            xaxis_type="category",  # याने मधल्या रिकाम्या वेळेचे गॅप्स निघून कॅंडल्स एकदम ५ मिनिटांच्या चार्टसारख्या सलग दिसतील
-            height=450, 
-            margin=dict(l=10, r=10, t=30, b=10)
-                )
         
