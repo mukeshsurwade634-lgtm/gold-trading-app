@@ -1,4 +1,5 @@
 import streamlit as st
+import plotly.graph_objects as go
 import requests
 import yfinance as yf
 
@@ -58,76 +59,100 @@ if choice == "१. सोन्याचे पक्के bill":
         st.success(f"### 🧾 सराफा पक्के बिल (२२K)\n• मूळ किंमत: ₹{pure_cost:.2f}\n• घडणावळ: ₹{making_cost:.2f}\n• एकूण रक्कम GST सह: **₹{total:.2f}**")
 
 elif choice == "२. निफ्टी लाईव्ह निकष स्क्रीन":
-    st.title("📈 निफ्टी ५० प्रगत ताळेबंद (EMA, RSI, MACD)")
+    st.title("📈 निफ्टी ५० इंट्राडे अल्गो (5m चार्ट आणि बाण)")
     
-    # १. यफायनान्सकडून ऐतिहासिक डेटा ओढणे (EMA आणि RSI कॅल्क्युलेशनसाठी)
+    # १. ५ मिनिटांचा (5m) लाईव्ह डेटा ओढणे
     nifty = yf.Ticker("^NSEI")
-    df = nifty.history(period="1mo", interval="1d") # गेल्या १ महिन्याचा डेली डेटा
+    df = nifty.history(period="2d", interval="5m")
     
     if not df.empty:
-        nifty_live = df['Close'].iloc[-1] # चालू भाव
-        
-        # खरोखरचा गणितीय ९ EMA आणि २१ EMA काढणे
+        # इंडिकेटर्स मोजणे
         df['EMA_9'] = df['Close'].ewm(span=9, adjust=False).mean()
         df['EMA_21'] = df['Close'].ewm(span=21, adjust=False).mean()
         
-        ema_9 = df['EMA_9'].iloc[-1]
-        ema_21 = df['EMA_21'].iloc[-1]
-        
-        # खरोखरचा RSI 14 काढणे
         delta = df['Close'].diff()
         gain = (delta.where(delta > 0, 0)).rolling(window=14).mean()
         loss = (-delta.where(delta < 0, 0)).rolling(window=14).mean()
         rs = gain / loss
-        live_rsi = 100 - (100 / (1 + rs.iloc[-1]))
-    else:
-        nifty_live = 25044.65
-        ema_9 = nifty_live - 45.0
-        ema_21 = nifty_live - 110.0
-        live_rsi = 56.45
+        df['RSI'] = 100 - (100 / (1 + rs))
+        
+        # आजचा शेवटचा भाग (शेवटच्या ६० कॅंडल्स) चार्टवर दाखवण्यासाठी वेगळा करणे
+        df_chart = df.tail(60).copy()
+        
+        # BUY आणि SELL चे बाण (Arrows) शोधण्याचे लॉजिक
+        buy_signals = []
+        sell_signals = []
+        
+        for i in range(1, len(df_chart)):
+            # जेव्हा ९ EMA ने २१ EMA ला खालून वर क्रॉस केले (BUY बाण)
+            if df_chart['EMA_9'].iloc[i] > df_chart['EMA_21'].iloc[i] and df_chart['EMA_9'].iloc[i-1] <= df_chart['EMA_21'].iloc[i-1]:
+                buy_signals.append(df_chart['Low'].iloc[i] - 10) # कॅंडलच्या थोडे खाली बाण दिसेल
+                sell_signals.append(None)
+            # जेव्हा ९ EMA ने २१ EMA ला वरून खाली क्रॉस केले (SELL बाण)
+            elif df_chart['EMA_9'].iloc[i] < df_chart['EMA_21'].iloc[i] and df_chart['EMA_9'].iloc[i-1] >= df_chart['EMA_21'].iloc[i-1]:
+                sell_signals.append(df_chart['High'].iloc[i] + 10) # कॅंडलच्या थोडे वर बाण दिसेल
+                buy_signals.append(None)
+            else:
+                buy_signals.append(None)
+                sell_signals.append(None)
+                
+        # पहिल्या कॅंडलसाठी रिकामी जागा
+        buy_signals.insert(0, None)
+        sell_signals.insert(0, None)
 
-    macd_line = 12.40
-    signal_line = 8.15
-    
-    st.subheader("📊 चालू बाजार किंमत (Nifty 50 Live)")
-    st.metric(label="निफ्टी ५० चालू भाव", value=f"₹{nifty_live:.2f}")
-    
-    st.markdown("---")
-    col1, col2, col3 = st.columns(3)
-    
-    # ट्रेंड ठरवण्याचे खरे अल्गो लॉजिक
-    is_bullish = ema_9 > ema_21 and live_rsi > 50
-    
-    with col1:
-        st.info("### 📐 मुव्हिंग ॲव्हरेज (EMA)")
-        st.write(f"• ९ EMA: ₹{ema_9:.2f}")
-        st.write(f"• २१ EMA: ₹{ema_21:.2f}")
-        if ema_9 > ema_21:
-            st.success("🟢 तेजीचा कल (Bullish)")
+        nifty_live = df_chart['Close'].iloc[-1]
+        ema_9 = df_chart['EMA_9'].iloc[-1]
+        ema_21 = df_chart['EMA_21'].iloc[-1]
+        live_rsi = df_chart['RSI'].iloc[-1]
+
+        # चालू भाव आणि इंडिकेटर्स दाखवणे
+        st.metric(label="निफ्टी ५० चालू भाव (5m)", value=f"₹{nifty_live:.2f}")
+        
+        # २. कॅंडलस्टिक चार्ट आणि बाण तयार करणे
+        fig = go.Figure()
+        
+        # कॅंडल्स (Candlesticks)
+        fig.add_trace(go.Candlestick(
+            x=df_chart.index, open=df_chart['Open'], high=df_chart['High'],
+            low=df_chart['Low'], close=df_chart['Close'], name='Nifty 5m'
+        ))
+        
+        # ९ आणि २१ EMA रेषा
+        fig.add_trace(go.Scatter(x=df_chart.index, y=df_chart['EMA_9'], line=dict(color='cyan', width=1.5), name='9 EMA'))
+        fig.add_trace(go.Scatter(x=df_chart.index, y=df_chart['EMA_21'], line=dict(color='orange', width=1.5), name='21 EMA'))
+        
+        # हिरवा BUY बाण (वरच्या दिशेने तोंड असलेला त्रिकोण)
+        fig.add_trace(go.Scatter(
+            x=df_chart.index, y=buy_signals, mode='markers',
+            marker=dict(symbol='triangle-up', size=14, color='#00ff00'), name='BUY संकेत'
+        ))
+        
+        # लाल SELL बाण (खालच्या दिशेने तोंड असलेला त्रिकोण)
+        fig.add_trace(go.Scatter(
+            x=df_chart.index, y=sell_signals, mode='markers',
+            marker=dict(symbol='triangle-down', size=14, color='#ff0000'), name='SELL संकेत'
+        ))
+        
+        fig.update_layout(
+            template="plotly_dark", xaxis_rangeslider_visible=False,
+            height=450, margin=dict(l=10, r=10, t=30, b=10)
+        )
+        
+        # स्क्रीनवर चार्ट दाखवणे
+        st.plotly_chart(fig, use_container_width=True)
+        
+        # ३. अल्गो फायनल निर्णय बॉक्स
+        st.subheader("💡 अल्गो फायनल निर्णय (इंट्राडे)")
+        ema_diff = abs(ema_9 - ema_21)
+        
+        if ema_diff < 15:
+            st.warning("⏸️ **WAIT / NO TRADE (मार्केट साईडवेज आहे):** एकाच रेंजमध्ये मार्केट फिरत आहे, नवीन ट्रेड टाळा.")
+        elif ema_9 > ema_21 and live_rsi > 55:
+            st.success("🚀 **BUY CALL (तेजी):** चार्टवर हिरवा बाण आला आहे आणि मार्केट मजबूत आहे!")
+        elif ema_9 < ema_21 and live_rsi < 45:
+            st.error("💥 **BUY PUT (मंदी):** चार्टवर लाल बाण आला आहे आणि विक्रीचा दबाव आहे!")
         else:
-            st.error("🔴 मंदीचा कल (Bearish)")
-            
-    with col2:
-        st.info("### 📊 ताकद इंडिकेटर (RSI)")
-        st.write(f"• RSI स्कोअर: {live_rsi:.2f}")
-        if live_rsi > 50:
-            st.success("🟢 Market मजबूत आहे")
-        else:
-            st.error("🔴 Market कमजोर आहे")
-            
-    with col3:
-        st.info("### 📉 MACD ट्रेंड ट्रॅकर")
-        st.write(f"• MACD लाईन: {macd_line:.2f}")
-        if is_bullish:
-            st.success("🟢 CALL पोझिशन संकेत")
-        else:
-            st.error("🔴 PUT पोझिशन संकेत")
-            
-    st.markdown("---")
-    st.subheader("💡 अल्गो फायनल निर्णय स्ट्रॅटेजी")
-    
-    if is_bullish:
-        st.success("🚀 **मुकेश अल्गो फायनल संकेत:** **BUY CALL (तेजी)** \n\nEMA आणि RSI हे इंडिकेटर्स बाजारात मजबूत तेजी येण्याचा संकेत देत आहेत!")
+            st.info("⚖️ **प्रतीक्षा करा:** इंडिकेटर्स पूर्णपणे जुळण्याची वाट पहा.")
     else:
-        st.error("💥 **मुकेश अल्गो फायनल संकेत:** **BUY PUT / SELL (मंदी)** \n\nलक्ष द्या! ९ EMA हा २१ EMA च्या खाली गेला आहे आणि मार्केटमध्ये मंदी येण्याचा संकेत मिळत आहे!")
+        st.error("सध्या मार्केट डेटा उपलब्ध नाही, थोड्या वेळाने प्रयत्न करा.")
         
