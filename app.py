@@ -1,4 +1,9 @@
 import streamlit as st
+from streamlit_autorefresh import st_autorefresh
+
+# दर ६० सेकंदांनी (1 मिनिटाने) ॲप आपोआप रिफ्रेश होईल
+st_autorefresh(interval=60000, key="nifty_auto_refresh")
+
 import plotly.graph_objects as go
 import requests
 import yfinance as yf
