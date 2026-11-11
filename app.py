@@ -68,7 +68,7 @@ elif choice == "२. निफ्टी लाईव्ह निकष स्�
     
     # १. ५ मिनिटांचा (5m) लाईव्ह डेटा ओढणे
     nifty = yf.Ticker("^NSEI")
-    df = nifty.history(period="2d", interval="5m")
+    df = nifty.history(period="1d", interval="5m")
     
     if not df.empty:
         # इंडिकेटर्स मोजणे
@@ -160,4 +160,11 @@ elif choice == "२. निफ्टी लाईव्ह निकष स्�
             st.info("⚖️ **प्रतीक्षा करा:** इंडिकेटर्स पूर्णपणे जुळण्याची वाट पहा.")
     else:
         st.error("सध्या मार्केट डेटा उपलब्ध नाही, थोड्या वेळाने प्रयत्न करा.")
+                fig.update_layout(
+            template="plotly_dark", 
+            xaxis_rangeslider_visible=False,
+            xaxis_type="category",  # याने मधल्या रिकाम्या वेळेचे गॅप्स निघून कॅंडल्स एकदम ५ मिनिटांच्या चार्टसारख्या सलग दिसतील
+            height=450, 
+            margin=dict(l=10, r=10, t=30, b=10)
+                )
         
