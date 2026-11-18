@@ -11,16 +11,20 @@ st_autorefresh(interval=30000, key="algo_fast_refresh")
 
 def get_bhusawal_live_gold():
     try:
-        usd_res = requests.get("https://er-api.com", timeout=5).json()
-        inr_rate = usd_res["rates"]["INR"]
-        gold_res = requests.get("https://er-api.com", timeout=5).json()
-        if "rates" in gold_res and "USD" in gold_res["rates"]:
-            gold_spot_usd = 1 / gold_res["rates"]["USD"]
-        else:
-            gold_spot_usd = 2745.50
-        return gold_spot_usd, inr_rate
-    except:
-        return 2745.50, 84.35 
+        # १. आंतरराष्ट्रीय सोन्याचा थेट लाईव्ह भाव (Gold Futures - USD per Troy Ounce)
+        gold_ticker = yf.Ticker("GC=F")
+        gold_data = gold_ticker.history(period="1d")
+        gold_spot_usd = gold_data['Close'].iloc[-1] if not gold_data.empty else 2745.50
+        
+        # २. अमेरिकन डॉलरचा थेट भारतीय रुपयातील भाव (USD to INR)
+        inr_ticker = yf.Ticker("INR=X")
+        inr_data = inr_ticker.history(period="1d")
+        inr_rate = inr_data['Close'].iloc[-1] if not inr_data.empty else 84.40
+        
+        return float(gold_spot_usd), float(inr_rate)
+    except Exception:
+        return 2745.50, 84.40
+     
 
 st.sidebar.title("🎛️ मुकेश अल्गो CONTROL")
 choice = st.sidebar.selectbox("पर्याय निवडा:", [
@@ -66,22 +70,38 @@ elif choice == "२. निफ्टी लाईव्ह निकष स्�
         df_chart = df.tail(60).copy()
         buy_signals, sell_signals = [], []
         
+                # ==========================================
+        # खिचडी थांबवणारे अचूक क्रॉसओव्हर (Clean Arrows) लॉजिक
+        # ==========================================
+        buy_signals, sell_signals = [], []
+        last_signal = None  # शेवटचा सिग्नल कोणता होता हे लक्षात ठेवण्यासाठी
+        
         for i in range(1, len(df_chart)):
-            # अचूक Breakout Candle बाण (दोन्ही EMA च्या बाहेर क्लोजिंग)
-            if df_chart['Close'].iloc[i] > df_chart['EMA_9'].iloc[i] and df_chart['Close'].iloc[i] > df_chart['EMA_21'].iloc[i] and \
-               (df_chart['Close'].iloc[i-1] <= df_chart['EMA_9'].iloc[i-1] or df_chart['Close'].iloc[i-1] <= df_chart['EMA_21'].iloc[i-1]):
-                buy_signals.append(df_chart['Low'].iloc[i] - 12)
+            ema9_curr = df_chart['EMA_9'].iloc[i]
+            ema21_curr = df_chart['EMA_21'].iloc[i]
+            ema9_prev = df_chart['EMA_9'].iloc[i-1]
+            ema21_prev = df_chart['EMA_21'].iloc[i-1]
+            close_curr = df_chart['Close'].iloc[i]
+            
+            # १. अचूक BUY बाण: लाल रेषेने निळ्या रेषेला वर क्रॉस केले + कॅंडल दोन्हीच्या वर बंद झाली
+            if (ema9_curr > ema21_curr) and (ema9_prev <= ema21_prev) and (close_curr > ema9_curr) and (last_signal != "BUY"):
+                buy_signals.append(df_chart['Low'].iloc[i] - 15)
                 sell_signals.append(None)
-            elif df_chart['Close'].iloc[i] < df_chart['EMA_9'].iloc[i] and df_chart['Close'].iloc[i] < df_chart['EMA_21'].iloc[i] and \
-                 (df_chart['Close'].iloc[i-1] >= df_chart['EMA_9'].iloc[i-1] or df_chart['Close'].iloc[i-1] >= df_chart['EMA_21'].iloc[i-1]):
-                sell_signals.append(df_chart['High'].iloc[i] + 12)
+                last_signal = "BUY"
+                
+            # २. अचूक SELL बाण: लाल रेषेने निळ्या रेषेला खाली क्रॉस केले + कॅंडल दोन्हीच्या खाली बंद झाली
+            elif (ema9_curr < ema21_curr) and (ema9_prev >= ema21_prev) and (close_curr < ema9_curr) and (last_signal != "SELL"):
+                sell_signals.append(df_chart['High'].iloc[i] + 15)
                 buy_signals.append(None)
+                last_signal = "SELL"
+                
             else:
                 buy_signals.append(None)
                 sell_signals.append(None)
                 
         buy_signals.insert(0, None)
         sell_signals.insert(0, None)
+        
 
         nifty_live = df_chart['Close'].iloc[-1]
         current_ema9 = df_chart['EMA_9'].iloc[-1]
